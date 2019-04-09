@@ -8,9 +8,10 @@
     "node": "10.15.0"
   },
   "scripts": {
-    "build": "tsc --declaration",
-    "watch": "tsc --watch --declaration",
-    "test": "mocha lib/tests/*"
+    "build": "npm run clean && tsc --declaration",
+    "watch": "npm run clean && tsc --watch --declaration",
+    "test": "mocha lib/tests/*",
+    "clean": "rm -rf ./lib"
   },
   "author": "surarin-ex",
   "license": "ISC",

@@ -10,4 +10,3 @@ export function generateMnemonic(lang: string = 'EN'): string {
   }
   return bip39.generateMnemonic();
 }
-
