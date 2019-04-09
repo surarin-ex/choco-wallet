@@ -1,0 +1,30 @@
+{
+  "name": "choco-wallet",
+  "version": "1.0.0",
+  "description": "",
+  "main": "./dist/index.js",
+  "private": true,
+  "engines": {
+    "node": "10.15.0"
+  },
+  "scripts": {
+    "build": "tsc",
+    "watch": "tsc --watch",
+    "test": "mocha dist/tests/*"
+  },
+  "author": "surarin-ex",
+  "license": "ISC",
+  "dependencies": {
+    "bip39": "^3.0.0",
+    "store": "^2.0.12"
+  },
+  "devDependencies": {
+    "@types/chai": "^4.1.7",
+    "@types/mocha": "^5.2.6",
+    "@types/store": "^2.0.1",
+    "chai": "^4.1.2",
+    "mocha": "^6.1.2",
+    "mock-local-storage": "^1.1.8",
+    "typescript": "^3.4.2"
+  }
+}
