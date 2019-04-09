@@ -1,0 +1,4 @@
+lib/**/*.ts
+!lib/**/*.d.ts
+src/**/*.ts
+!src/**/*.d.ts

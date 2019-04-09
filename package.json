@@ -2,15 +2,15 @@
   "name": "choco-wallet",
   "version": "1.0.0",
   "description": "",
-  "main": "./dist/index.js",
+  "main": "./lib/index.js",
   "private": true,
   "engines": {
     "node": "10.15.0"
   },
   "scripts": {
-    "build": "tsc",
-    "watch": "tsc --watch",
-    "test": "mocha dist/tests/*"
+    "build": "tsc --declaration",
+    "watch": "tsc --watch --declaration",
+    "test": "mocha lib/tests/*"
   },
   "author": "surarin-ex",
   "license": "ISC",
