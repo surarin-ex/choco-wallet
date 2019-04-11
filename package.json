@@ -16,7 +16,9 @@
   "author": "surarin-ex",
   "license": "ISC",
   "dependencies": {
+    "bip32": "^1.0.4",
     "bip39": "^3.0.0",
+    "bitcoinjs-lib": "^5.0.1",
     "store": "^2.0.12"
   },
   "devDependencies": {
