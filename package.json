@@ -8,16 +8,17 @@
     "node": "10.15.0"
   },
   "scripts": {
-    "build": "npm run clean && tsc --declaration",
-    "watch": "npm run clean && tsc --watch --declaration",
+    "build": "yarn run clean && tsc --declaration",
+    "watch": "yarn run clean && tsc --watch --declaration",
     "test": "mocha lib/tests/*",
-    "clean": "rm -rf ./lib"
+    "clean": "rm -rf ./lib",
+    "lint": "yarn eslint src/**/*.ts --fix"
   },
   "author": "surarin-ex",
   "license": "ISC",
   "dependencies": {
     "bip32": "^1.0.4",
-    "bip39": "^3.0.0",
+    "bip39": "2.6.0",
     "bitcoinjs-lib": "^5.0.1",
     "store": "^2.0.12"
   },
@@ -25,9 +26,15 @@
     "@types/chai": "^4.1.7",
     "@types/mocha": "^5.2.6",
     "@types/store": "^2.0.1",
+    "@typescript-eslint/eslint-plugin": "^1.7.0",
     "chai": "^4.1.2",
+    "eslint": "^5.16.0",
+    "eslint-config-prettier": "^4.2.0",
+    "eslint-plugin-prettier": "^3.0.1",
     "mocha": "^6.1.4",
     "mock-local-storage": "^1.1.8",
+    "prettier": "^1.17.0",
     "typescript": "^3.4.2"
-  }
+  },
+  "repository": "git@github.com:surarin-ex/choco-wallet.git"
 }
