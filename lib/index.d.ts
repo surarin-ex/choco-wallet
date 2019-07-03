@@ -1,5 +1,3 @@
-/**
- * Mnemonicを生成する
- * @param {string} lang 'JA', 'EN' etc...
- */
-export declare function generateMnemonic(lang?: string): string;
+import generateMnemonic from "./functions/generateMnemonic";
+import Monacoin from "./classes/monacoin";
+export { generateMnemonic, Monacoin };

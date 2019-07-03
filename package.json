@@ -1,6 +1,6 @@
 {
   "name": "choco-wallet",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "",
   "main": "./lib/index.js",
   "private": true,
@@ -10,19 +10,20 @@
   "scripts": {
     "build": "yarn run clean && tsc --declaration",
     "watch": "yarn run clean && tsc --watch --declaration",
-    "test": "mocha lib/tests/*",
+    "test": "mocha './lib/tests/**/*.js'",
     "clean": "rm -rf ./lib",
     "lint": "yarn eslint src/**/*.ts --fix"
   },
   "author": "surarin-ex",
   "license": "ISC",
   "dependencies": {
-    "bip32": "^1.0.4",
+    "bip32": "2.0.3",
     "bip39": "2.6.0",
     "bitcoinjs-lib": "^5.0.1",
     "store": "^2.0.12"
   },
   "devDependencies": {
+    "@types/bip39": "^2.4.2",
     "@types/chai": "^4.1.7",
     "@types/mocha": "^5.2.6",
     "@types/store": "^2.0.1",
