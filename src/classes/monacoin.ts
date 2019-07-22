@@ -9,8 +9,8 @@ import * as bclib from "bitcoinjs-lib";
 const MONACOIN = {
   wif: 176,
   bip32: {
-    public: 0x0488b21e,
-    private: 0x0488ade4
+    public: 77429938,
+    private: 76066276
   },
   messagePrefix: "Monacoin Signed Message:\n",
   bech32: "mona",

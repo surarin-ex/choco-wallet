@@ -13,7 +13,7 @@
     "sourceType": "module",
     "project": "./tsconfig.json"
   },
-  "env": { "browser": false, "node": true, "es6": true },
+  "env": { "browser": true, "node": false, "es6": true },
   "rules": {
     "@typescript-eslint/interface-name-prefix": "off",
     "@typescript-eslint/camelcase": "off",
