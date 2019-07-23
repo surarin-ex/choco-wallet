@@ -2,7 +2,7 @@ import createBlockbook, { Blockbook } from "../../../classes/blockbook";
 import endpointList from "../../../conf/blockbookList";
 import { assert } from "chai";
 
-describe.only("Blockbook のユニットテスト", (): void => {
+describe("Blockbook のユニットテスト", (): void => {
   describe("createBlockbook() のユニットテスト", async (): Promise<void> => {
     it("初期化できる", async (): Promise<void> => {
       const blockbook = await createBlockbook();

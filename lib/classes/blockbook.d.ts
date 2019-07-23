@@ -64,6 +64,10 @@ export declare class Blockbook {
      * @param txid トランザクション ID
      */
     getTxInfo(txid: string): Promise<TxInfo>;
+    /**
+     * 複数のトランザクション情報を取得するメソッド
+     * @param txids トランザクション IDの配列
+     */
     getTxInfos(txids: string[]): Promise<TxInfo[]>;
 }
 /**

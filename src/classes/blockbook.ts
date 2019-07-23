@@ -132,6 +132,10 @@ export class Blockbook {
     }
   }
 
+  /**
+   * 複数のトランザクション情報を取得するメソッド
+   * @param txids トランザクション IDの配列
+   */
   public async getTxInfos(txids: string[]): Promise<TxInfo[]> {
     try {
       const promises: Promise<TxInfo>[] = [];
