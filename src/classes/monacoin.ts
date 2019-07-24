@@ -180,10 +180,7 @@ export default class Monacoin {
         options.startIndex,
         options.length
       );
-      console.log(`options: ${JSON.stringify(options)}`);
-      console.log(`paths: ${paths}`);
       const addresses = this.getAddresses(paths);
-      console.log(`addresses: ${addresses}`);
       const addressInfos = await options.blockbook.getAddressInfos(addresses);
       const unspentSequence = this._getUnspentAddressSequence(
         addressInfos,
