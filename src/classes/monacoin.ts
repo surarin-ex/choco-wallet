@@ -174,15 +174,16 @@ export default class Monacoin {
     unspentSequence: number;
   }> {
     try {
-      const blockbook = await createBlockbook(this._chain, this._coin);
       const allAddressData = Object.assign({}, options.allAddressData);
       const paths = this.getPaths(
         options.isChange,
         options.startIndex,
         options.length
       );
+      console.log(paths);
       const addresses = this.getAddresses(paths);
-      const addressInfos = await blockbook.getAddressInfos(addresses);
+      console.log(addresses);
+      const addressInfos = await options.blockbook.getAddressInfos(addresses);
       const unspentSequence = this._getUnspentAddressSequence(
         addressInfos,
         options.startSequence

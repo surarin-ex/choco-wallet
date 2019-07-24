@@ -93,7 +93,7 @@ export class Blockbook {
    */
   public async getAddressInfo(address: string): Promise<AddressInfo> {
     try {
-      const uri = `${this.endpoint}/v2/address/${address}`;
+      const uri = `${this.endpoint}v2/address/${address}`;
       const res = await axios.get(uri);
       return res.data;
     } catch (err) {
@@ -124,7 +124,7 @@ export class Blockbook {
    */
   public async getTxInfo(txid: string): Promise<TxInfo> {
     try {
-      const uri = `${this.endpoint}/v2/tx/${txid}`;
+      const uri = `${this.endpoint}v2/tx/${txid}`;
       const res = await axios.get(uri);
       return res.data;
     } catch (err) {
