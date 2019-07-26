@@ -54,8 +54,9 @@ export interface AddressInfo {
 export default class Monacoin {
   public addressInfos: AddressInfo[];
   public balance: string;
-  public displayUnit: string;
-  public balanceUnit: string;
+  public balanceReadable: string;
+  public readonly displayUnit: string;
+  public readonly balanceUnit: string;
   private _seed: Buffer;
   private _node: BIP32Interface;
   private _chain: "main" | "test";
@@ -236,6 +237,9 @@ export default class Monacoin {
       return sumNum.toString();
     }, "0");
     this.balance = balance;
+    this.balanceReadable = new BigNumber(balance)
+      .dividedBy(100000000)
+      .toString();
   }
 
   /**

@@ -14,8 +14,9 @@ export interface AddressInfo {
 export default class Monacoin {
     addressInfos: AddressInfo[];
     balance: string;
-    displayUnit: string;
-    balanceUnit: string;
+    balanceReadable: string;
+    readonly displayUnit: string;
+    readonly balanceUnit: string;
     private _seed;
     private _node;
     private _chain;

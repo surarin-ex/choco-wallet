@@ -144,6 +144,7 @@ describe("Monacoin のユニットテスト", (): void => {
         ).length >= 6
       );
       assert.deepEqual(monacoin.balance, "499950200");
+      assert.deepEqual(monacoin.balanceReadable, "4.999502");
     });
   });
 });
