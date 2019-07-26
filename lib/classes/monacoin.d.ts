@@ -13,6 +13,9 @@ export interface AddressInfo {
  */
 export default class Monacoin {
     addressInfos: AddressInfo[];
+    balance: string;
+    displayUnit: string;
+    balanceUnit: string;
     private _seed;
     private _node;
     private _chain;
@@ -68,6 +71,11 @@ export default class Monacoin {
      */
     private _getAddressData;
     /**
+     * プロパティのアドレス情報の配列から、承認済み残高と未承認残高の合計値を計算して文字列形式で出力するメソッド。
+     * updateAddressInfos()が未実行の場合"0"を返す
+     */
+    private _updateBalance;
+    /**
      * GAP_LIMITまでの全アドレス情報を取得するメソッド。
      * 取得したアドレス情報はインスタンスのプロパティに格納され、返り値としても渡される
      * @type {object} options 引数のオブジェクト
@@ -75,13 +83,8 @@ export default class Monacoin {
      * @property {number} changeAddressNum 最低限取得するおつりアドレスの個数
      * @param options 引数のオブジェクト
      */
-    getAllAddressInfos(options?: {
+    updateAddressInfos(options?: {
         receivingAddressNum: number;
         changeAddressNum: number;
-    }): Promise<AddressInfo[]>;
-    /**
-     * プロパティのアドレス情報の配列から、承認済み残高と未承認残高の合計値を計算して文字列形式で出力するメソッド。
-     * getAllAddressInfos()が未実行の場合"0"を返す
-     */
-    getBalance(): string;
+    }): Promise<void>;
 }

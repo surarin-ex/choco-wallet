@@ -53,6 +53,9 @@ export interface AddressInfo {
  */
 export default class Monacoin {
   public addressInfos: AddressInfo[];
+  public balance: string;
+  public displayUnit: string;
+  public balanceUnit: string;
   private _seed: Buffer;
   private _node: BIP32Interface;
   private _chain: "main" | "test";
@@ -71,6 +74,9 @@ export default class Monacoin {
   private _pathBase: string;
   public constructor(mnemonic: string, chain: "main" | "test" = "main") {
     this.addressInfos = [];
+    this.balance = "0";
+    this.displayUnit = "MONA";
+    this.balanceUnit = "WATANABE";
     this._seed = bip39.mnemonicToSeed(mnemonic);
     this._node = bip32.fromSeed(this._seed, MONACOIN); // Monacoinのパラメータを指定
     this._chain = chain;
@@ -219,6 +225,20 @@ export default class Monacoin {
   }
 
   /**
+   * プロパティのアドレス情報の配列から、承認済み残高と未承認残高の合計値を計算して文字列形式で出力するメソッド。
+   * updateAddressInfos()が未実行の場合"0"を返す
+   */
+  private _updateBalance(): void {
+    const balance = this.addressInfos.reduce((sum, info): string => {
+      const sumNum = new BigNumber(sum)
+        .plus(info.balance)
+        .plus(info.unconfirmedBalance);
+      return sumNum.toString();
+    }, "0");
+    this.balance = balance;
+  }
+
+  /**
    * GAP_LIMITまでの全アドレス情報を取得するメソッド。
    * 取得したアドレス情報はインスタンスのプロパティに格納され、返り値としても渡される
    * @type {object} options 引数のオブジェクト
@@ -226,7 +246,7 @@ export default class Monacoin {
    * @property {number} changeAddressNum 最低限取得するおつりアドレスの個数
    * @param options 引数のオブジェクト
    */
-  public async getAllAddressInfos(
+  public async updateAddressInfos(
     options: {
       receivingAddressNum: number;
       changeAddressNum: number;
@@ -234,7 +254,7 @@ export default class Monacoin {
       receivingAddressNum: GAP_LIMIT_RECEIVING,
       changeAddressNum: GAP_LIMIT_CHANGE
     }
-  ): Promise<AddressInfo[]> {
+  ): Promise<void> {
     const blockbook = await createBlockbook(this._chain, this._coin);
     let allAddressData: {
       allPaths: string[];
@@ -310,20 +330,6 @@ export default class Monacoin {
       }
     );
     this.addressInfos = addressInfos;
-    return addressInfos;
-  }
-
-  /**
-   * プロパティのアドレス情報の配列から、承認済み残高と未承認残高の合計値を計算して文字列形式で出力するメソッド。
-   * getAllAddressInfos()が未実行の場合"0"を返す
-   */
-  public getBalance(): string {
-    const balance = this.addressInfos.reduce((sum, info): string => {
-      const sumNum = new BigNumber(sum)
-        .plus(info.balance)
-        .plus(info.unconfirmedBalance);
-      return sumNum.toString();
-    }, "0");
-    return balance;
+    this._updateBalance();
   }
 }

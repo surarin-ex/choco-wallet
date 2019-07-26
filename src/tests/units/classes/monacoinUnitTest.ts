@@ -112,12 +112,12 @@ describe("Monacoin のユニットテスト", (): void => {
         );
       }
     );
-    it("アドレス情報を取得できる", async (): Promise<void> => {
-      const addressInfo = await monacoin.getAllAddressInfos({
+    it("アドレス情報が更新される", async (): Promise<void> => {
+      await monacoin.updateAddressInfos({
         receivingAddressNum: 14,
         changeAddressNum: 6
       });
-      const initialAddress = addressInfo.find(
+      const initialAddress = monacoin.addressInfos.find(
         (info): boolean => {
           return info.index === 0 && info.isChange === false;
         }
@@ -130,42 +130,20 @@ describe("Monacoin のユニットテスト", (): void => {
       assert.deepEqual(initialAddress.path, "m/49'/1'/0'/0/0");
       assert.isNotEmpty(initialAddress.txids);
       assert.isTrue(
-        addressInfo.filter(
+        monacoin.addressInfos.filter(
           (info): boolean => {
             return !info.isChange;
           }
         ).length >= 14
       );
       assert.isTrue(
-        addressInfo.filter(
+        monacoin.addressInfos.filter(
           (info): boolean => {
             return info.isChange;
           }
         ).length >= 6
       );
-    });
-  });
-  describe("getBalance() のユニットテスト", (): void => {
-    let monacoin: Monacoin;
-    before(
-      "インスタンス作成",
-      (): void => {
-        monacoin = new Monacoin(
-          "むける　とかい　はんこ　ぐあい　きけんせい　ほそい　さゆう　そぼく　たいてい　さくら　とおか　はろうぃん",
-          "test"
-        );
-      }
-    );
-    it("アドレス情報取得前に実行すると0を取得できる", (): void => {
-      const balance = monacoin.getBalance();
-      assert.deepEqual(balance, "0");
-    });
-    it("アドレス情報取得後に実行すると正しい値を取得できる", async (): Promise<
-      void
-    > => {
-      await monacoin.getAllAddressInfos();
-      const balance = monacoin.getBalance();
-      assert.deepEqual(balance, "499950200");
+      assert.deepEqual(monacoin.balance, "499950200");
     });
   });
 });
