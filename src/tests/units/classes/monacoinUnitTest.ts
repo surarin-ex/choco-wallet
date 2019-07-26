@@ -113,7 +113,7 @@ describe("Monacoin のユニットテスト", (): void => {
       }
     );
     it("アドレス情報を取得できる", async (): Promise<void> => {
-      const addressInfo = await monacoin.getAllAddressInfo({
+      const addressInfo = await monacoin.getAllAddressInfos({
         receivingAddressNum: 14,
         changeAddressNum: 6
       });
@@ -143,6 +143,29 @@ describe("Monacoin のユニットテスト", (): void => {
           }
         ).length >= 6
       );
+    });
+  });
+  describe("getBalance() のユニットテスト", (): void => {
+    let monacoin: Monacoin;
+    before(
+      "インスタンス作成",
+      (): void => {
+        monacoin = new Monacoin(
+          "むける　とかい　はんこ　ぐあい　きけんせい　ほそい　さゆう　そぼく　たいてい　さくら　とおか　はろうぃん",
+          "test"
+        );
+      }
+    );
+    it("アドレス情報取得前に実行すると0を取得できる", (): void => {
+      const balance = monacoin.getBalance();
+      assert.deepEqual(balance, "0");
+    });
+    it("アドレス情報取得後に実行すると正しい値を取得できる", async (): Promise<
+      void
+    > => {
+      await monacoin.getAllAddressInfos();
+      const balance = monacoin.getBalance();
+      assert.deepEqual(balance, "499950200");
     });
   });
 });

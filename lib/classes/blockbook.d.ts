@@ -11,7 +11,7 @@ export interface BlockbookAddress {
     txs: number;
     txids?: string[];
 }
-export interface TxInfo {
+export interface BlockbookTx {
     txid: string;
     version: number;
     lockTime: number;
@@ -63,12 +63,12 @@ export declare class Blockbook {
      * トランザクション情報を取得するメソッド
      * @param txid トランザクション ID
      */
-    getTxInfo(txid: string): Promise<TxInfo>;
+    getBlockbookTx(txid: string): Promise<BlockbookTx>;
     /**
      * 複数のトランザクション情報を取得するメソッド
      * @param txids トランザクション IDの配列
      */
-    getTxInfos(txids: string[]): Promise<TxInfo[]>;
+    getBlockbookTxs(txids: string[]): Promise<BlockbookTx[]>;
 }
 /**
  * Blockbookのクラスをインスタンス化する関数

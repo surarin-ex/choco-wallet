@@ -5,6 +5,7 @@ import { BIP32Interface } from "bip32";
 import * as bclib from "bitcoinjs-lib";
 import createBlockbook, { BlockbookAddress } from "./blockbook";
 import { Blockbook } from "../../src/classes/blockbook";
+import BigNumber from "bignumber.js";
 
 // Monacoinのパラメータ設定(version prefix: Base58Checkエンコード時に頭に付加する文字列)
 // Monacoin本家のソースコードと同じパラメータを使用すること (https://github.com/monacoinproject/monacoin/blob/master-0.17/src/chainparams.cpp)
@@ -36,10 +37,22 @@ const pathBase_test = "m/49'/1'/0'";
 const GAP_LIMIT_RECEIVING = 10; // 未使用受取アドレスの余裕数
 const GAP_LIMIT_CHANGE = 3; // 未使用おつりアドレスの余裕数
 
+export interface AddressInfo {
+  address: string;
+  path: string;
+  isSpent: boolean;
+  isChange: boolean;
+  index: number;
+  balance: string;
+  unconfirmedBalance: string;
+  txids?: string[];
+}
+
 /**
  * Monacoinのクラス
  */
 export default class Monacoin {
+  public addressInfos: AddressInfo[];
   private _seed: Buffer;
   private _node: BIP32Interface;
   private _chain: "main" | "test";
@@ -57,6 +70,7 @@ export default class Monacoin {
   };
   private _pathBase: string;
   public constructor(mnemonic: string, chain: "main" | "test" = "main") {
+    this.addressInfos = [];
     this._seed = bip39.mnemonicToSeed(mnemonic);
     this._node = bip32.fromSeed(this._seed, MONACOIN); // Monacoinのパラメータを指定
     this._chain = chain;
@@ -144,7 +158,7 @@ export default class Monacoin {
    * gap limit を補償するために使用する未使用アドレスの連続数を計算して返り値として返す。
    * @type {object} allAddressData - アドレス情報とそのパスをまとめたオブジェクト
    * @property {string[]} allPaths パスの配列
-   * @property {BlockbookAddress[]} allBlockbookAddress blockbookから取得するアドレス情報の格納先
+   * @property {BlockbookAddress[]} allBlockbookAddresses blockbookから取得するアドレス情報の格納先
    * @type {object} options 引数のオブジェクト
    * @property {object} blockbook Blockbookオブジェクト
    * @property {object} allAddressData アドレス情報とパスをまとめたオブジェクト
@@ -156,11 +170,11 @@ export default class Monacoin {
    * @property {object} allAddressData 元のアドレス情報と取得した全アドレス情報をマージしたオブジェクト
    * @property {number} unspentSequence 未使用アドレスの連続数
    */
-  private async _getAddressInfo(options: {
+  private async _getAddressData(options: {
     blockbook: Blockbook;
     allAddressData: {
       allPaths: string[];
-      allBlockbookAddress: BlockbookAddress[];
+      allBlockbookAddresses: BlockbookAddress[];
     };
     isChange: 0 | 1;
     startIndex: number;
@@ -169,7 +183,7 @@ export default class Monacoin {
   }): Promise<{
     allAddressData: {
       allPaths: string[];
-      allBlockbookAddress: BlockbookAddress[];
+      allBlockbookAddresses: BlockbookAddress[];
     };
     unspentSequence: number;
   }> {
@@ -195,7 +209,7 @@ export default class Monacoin {
       );
       addressInfos.forEach(
         (info: BlockbookAddress): void => {
-          allAddressData.allBlockbookAddress.push(info);
+          allAddressData.allBlockbookAddresses.push(info);
         }
       );
       return { allAddressData, unspentSequence };
@@ -205,13 +219,14 @@ export default class Monacoin {
   }
 
   /**
-   * GAP_LIMITまでの全アドレス情報を取得するメソッド
+   * GAP_LIMITまでの全アドレス情報を取得するメソッド。
+   * 取得したアドレス情報はインスタンスのプロパティに格納され、返り値としても渡される
    * @type {object} options 引数のオブジェクト
    * @property {number} receivingAddressNum 最低限取得する受取アドレスの個数
    * @property {number} changeAddressNum 最低限取得するおつりアドレスの個数
    * @param options 引数のオブジェクト
    */
-  public async getAllAddressInfo(
+  public async getAllAddressInfos(
     options: {
       receivingAddressNum: number;
       changeAddressNum: number;
@@ -219,30 +234,19 @@ export default class Monacoin {
       receivingAddressNum: GAP_LIMIT_RECEIVING,
       changeAddressNum: GAP_LIMIT_CHANGE
     }
-  ): Promise<
-    {
-      address: string;
-      path: string;
-      isSpent: boolean;
-      isChange: boolean;
-      index: number;
-      balance: string;
-      unconfirmedBalance: string;
-      txids?: string[];
-    }[]
-  > {
+  ): Promise<AddressInfo[]> {
     const blockbook = await createBlockbook(this._chain, this._coin);
     let allAddressData: {
       allPaths: string[];
-      allBlockbookAddress: BlockbookAddress[];
+      allBlockbookAddresses: BlockbookAddress[];
     } = {
       allPaths: [],
-      allBlockbookAddress: []
+      allBlockbookAddresses: []
     };
 
     // 受取アドレスの情報取得
     let unspentSequence: number;
-    ({ allAddressData, unspentSequence } = await this._getAddressInfo({
+    ({ allAddressData, unspentSequence } = await this._getAddressData({
       blockbook,
       allAddressData,
       isChange: 0,
@@ -254,7 +258,7 @@ export default class Monacoin {
     let nextIndex = options.receivingAddressNum;
     while (unspentSequence < GAP_LIMIT_RECEIVING) {
       const length = Math.max(GAP_LIMIT_RECEIVING - unspentSequence, 0);
-      ({ allAddressData, unspentSequence } = await this._getAddressInfo({
+      ({ allAddressData, unspentSequence } = await this._getAddressData({
         blockbook,
         allAddressData,
         isChange: 0,
@@ -266,7 +270,7 @@ export default class Monacoin {
     }
 
     // おつりアドレスの情報取得
-    ({ allAddressData, unspentSequence } = await this._getAddressInfo({
+    ({ allAddressData, unspentSequence } = await this._getAddressData({
       blockbook,
       allAddressData,
       isChange: 1,
@@ -277,7 +281,7 @@ export default class Monacoin {
     nextIndex = options.changeAddressNum;
     while (unspentSequence < GAP_LIMIT_CHANGE) {
       const length = Math.max(GAP_LIMIT_CHANGE - unspentSequence, 0);
-      ({ allAddressData, unspentSequence } = await this._getAddressInfo({
+      ({ allAddressData, unspentSequence } = await this._getAddressData({
         blockbook,
         allAddressData,
         isChange: 1,
@@ -289,19 +293,10 @@ export default class Monacoin {
     }
 
     // アドレス情報の整理
-    const addressInfo: {
-      address: string;
-      path: string;
-      isSpent: boolean;
-      isChange: boolean;
-      index: number;
-      balance: string;
-      unconfirmedBalance: string;
-      txids?: string[];
-    }[] = [];
-    allAddressData.allBlockbookAddress.forEach(
+    const addressInfos: AddressInfo[] = [];
+    allAddressData.allBlockbookAddresses.forEach(
       (info, index): void => {
-        addressInfo.push({
+        addressInfos.push({
           address: info.address,
           path: allAddressData.allPaths[index],
           isSpent: info.txs > 0 ? true : false,
@@ -314,7 +309,21 @@ export default class Monacoin {
         });
       }
     );
+    this.addressInfos = addressInfos;
+    return addressInfos;
+  }
 
-    return addressInfo;
+  /**
+   * プロパティのアドレス情報の配列から、承認済み残高と未承認残高の合計値を計算して文字列形式で出力するメソッド。
+   * getAllAddressInfos()が未実行の場合"0"を返す
+   */
+  public getBalance(): string {
+    const balance = this.addressInfos.reduce((sum, info): string => {
+      const sumNum = new BigNumber(sum)
+        .plus(info.balance)
+        .plus(info.unconfirmedBalance);
+      return sumNum.toString();
+    }, "0");
+    return balance;
   }
 }

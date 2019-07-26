@@ -146,7 +146,7 @@ describe("Blockbook のユニットテスト", (): void => {
     it("トランザクション情報を取得できる", async (): Promise<void> => {
       const txid =
         "8bc9ff20cc6a29b2db60e608225931fc3c04eaab09bebd9693f6fdd10f9542ff";
-      const txInfo = await blockbook.getTxInfo(txid);
+      const txInfo = await blockbook.getBlockbookTx(txid);
       assert.deepEqual(
         txInfo.txid,
         "8bc9ff20cc6a29b2db60e608225931fc3c04eaab09bebd9693f6fdd10f9542ff"
@@ -157,7 +157,7 @@ describe("Blockbook のユニットテスト", (): void => {
       );
     });
   });
-  describe("getTxInfos() のユニットテスト", (): void => {
+  describe("getBlockbookTxs() のユニットテスト", (): void => {
     let blockbook: Blockbook;
     const txids = [
       "8bc9ff20cc6a29b2db60e608225931fc3c04eaab09bebd9693f6fdd10f9542ff",
@@ -170,7 +170,7 @@ describe("Blockbook のユニットテスト", (): void => {
       }
     );
     it("複数のトランザクション情報を取得できる", async (): Promise<void> => {
-      const txInfos = await blockbook.getTxInfos(txids);
+      const txInfos = await blockbook.getBlockbookTxs(txids);
       assert.deepEqual(
         txInfos[0].txid,
         "8bc9ff20cc6a29b2db60e608225931fc3c04eaab09bebd9693f6fdd10f9542ff"

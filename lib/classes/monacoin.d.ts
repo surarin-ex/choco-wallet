@@ -1,7 +1,18 @@
+export interface AddressInfo {
+    address: string;
+    path: string;
+    isSpent: boolean;
+    isChange: boolean;
+    index: number;
+    balance: string;
+    unconfirmedBalance: string;
+    txids?: string[];
+}
 /**
  * Monacoinのクラス
  */
 export default class Monacoin {
+    addressInfos: AddressInfo[];
     private _seed;
     private _node;
     private _chain;
@@ -43,7 +54,7 @@ export default class Monacoin {
      * gap limit を補償するために使用する未使用アドレスの連続数を計算して返り値として返す。
      * @type {object} allAddressData - アドレス情報とそのパスをまとめたオブジェクト
      * @property {string[]} allPaths パスの配列
-     * @property {BlockbookAddress[]} allBlockbookAddress blockbookから取得するアドレス情報の格納先
+     * @property {BlockbookAddress[]} allBlockbookAddresses blockbookから取得するアドレス情報の格納先
      * @type {object} options 引数のオブジェクト
      * @property {object} blockbook Blockbookオブジェクト
      * @property {object} allAddressData アドレス情報とパスをまとめたオブジェクト
@@ -55,25 +66,22 @@ export default class Monacoin {
      * @property {object} allAddressData 元のアドレス情報と取得した全アドレス情報をマージしたオブジェクト
      * @property {number} unspentSequence 未使用アドレスの連続数
      */
-    private _getAddressInfo;
+    private _getAddressData;
     /**
-     * GAP_LIMITまでの全アドレス情報を取得するメソッド
+     * GAP_LIMITまでの全アドレス情報を取得するメソッド。
+     * 取得したアドレス情報はインスタンスのプロパティに格納され、返り値としても渡される
      * @type {object} options 引数のオブジェクト
      * @property {number} receivingAddressNum 最低限取得する受取アドレスの個数
      * @property {number} changeAddressNum 最低限取得するおつりアドレスの個数
      * @param options 引数のオブジェクト
      */
-    getAllAddressInfo(options?: {
+    getAllAddressInfos(options?: {
         receivingAddressNum: number;
         changeAddressNum: number;
-    }): Promise<{
-        address: string;
-        path: string;
-        isSpent: boolean;
-        isChange: boolean;
-        index: number;
-        balance: string;
-        unconfirmedBalance: string;
-        txids?: string[];
-    }[]>;
+    }): Promise<AddressInfo[]>;
+    /**
+     * プロパティのアドレス情報の配列から、承認済み残高と未承認残高の合計値を計算して文字列形式で出力するメソッド。
+     * getAllAddressInfos()が未実行の場合"0"を返す
+     */
+    getBalance(): string;
 }

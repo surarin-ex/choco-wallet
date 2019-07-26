@@ -15,7 +15,7 @@ export interface BlockbookAddress {
   txids?: string[]; // txs === 0 のときに省略される
 }
 
-export interface TxInfo {
+export interface BlockbookTx {
   txid: string;
   version: number;
   lockTime: number;
@@ -124,7 +124,7 @@ export class Blockbook {
    * トランザクション情報を取得するメソッド
    * @param txid トランザクション ID
    */
-  public async getTxInfo(txid: string): Promise<TxInfo> {
+  public async getBlockbookTx(txid: string): Promise<BlockbookTx> {
     try {
       const uri = `${this.endpoint}v2/tx/${txid}`;
       const res = await axios.get(uri);
@@ -138,11 +138,11 @@ export class Blockbook {
    * 複数のトランザクション情報を取得するメソッド
    * @param txids トランザクション IDの配列
    */
-  public async getTxInfos(txids: string[]): Promise<TxInfo[]> {
+  public async getBlockbookTxs(txids: string[]): Promise<BlockbookTx[]> {
     try {
-      const promises: Promise<TxInfo>[] = [];
+      const promises: Promise<BlockbookTx>[] = [];
       for (let txid of txids) {
-        promises.push(this.getTxInfo(txid));
+        promises.push(this.getBlockbookTx(txid));
       }
       const txInfos = await Promise.all(promises);
       return txInfos;
