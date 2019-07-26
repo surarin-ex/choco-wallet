@@ -3,7 +3,7 @@ import * as bip39 from "bip39";
 import * as bip32 from "bip32";
 import { BIP32Interface } from "bip32";
 import * as bclib from "bitcoinjs-lib";
-import createBlockbook, { AddressInfo } from "./blockbook";
+import createBlockbook, { BlockbookAddress } from "./blockbook";
 import { Blockbook } from "../../src/classes/blockbook";
 
 // Monacoinのパラメータ設定(version prefix: Base58Checkエンコード時に頭に付加する文字列)
@@ -126,7 +126,7 @@ export default class Monacoin {
    * @param startSequence 未使用アドレス連続数の初期値
    */
   private _getUnspentAddressSequence(
-    addressInfos: AddressInfo[],
+    addressInfos: BlockbookAddress[],
     startSequence: number
   ): number {
     let unspentSequence = startSequence;
@@ -144,7 +144,7 @@ export default class Monacoin {
    * gap limit を補償するために使用する未使用アドレスの連続数を計算して返り値として返す。
    * @type {object} allAddressData - アドレス情報とそのパスをまとめたオブジェクト
    * @property {string[]} allPaths パスの配列
-   * @property {AddressInfo[]} allAddressInfo blockbookから取得するアドレス情報の格納先
+   * @property {BlockbookAddress[]} allBlockbookAddress blockbookから取得するアドレス情報の格納先
    * @type {object} options 引数のオブジェクト
    * @property {object} blockbook Blockbookオブジェクト
    * @property {object} allAddressData アドレス情報とパスをまとめたオブジェクト
@@ -160,7 +160,7 @@ export default class Monacoin {
     blockbook: Blockbook;
     allAddressData: {
       allPaths: string[];
-      allAddressInfo: AddressInfo[];
+      allBlockbookAddress: BlockbookAddress[];
     };
     isChange: 0 | 1;
     startIndex: number;
@@ -169,7 +169,7 @@ export default class Monacoin {
   }): Promise<{
     allAddressData: {
       allPaths: string[];
-      allAddressInfo: AddressInfo[];
+      allBlockbookAddress: BlockbookAddress[];
     };
     unspentSequence: number;
   }> {
@@ -181,7 +181,9 @@ export default class Monacoin {
         options.length
       );
       const addresses = this.getAddresses(paths);
-      const addressInfos = await options.blockbook.getAddressInfos(addresses);
+      const addressInfos = await options.blockbook.getBlockbookAddresses(
+        addresses
+      );
       const unspentSequence = this._getUnspentAddressSequence(
         addressInfos,
         options.startSequence
@@ -192,8 +194,8 @@ export default class Monacoin {
         }
       );
       addressInfos.forEach(
-        (info: AddressInfo): void => {
-          allAddressData.allAddressInfo.push(info);
+        (info: BlockbookAddress): void => {
+          allAddressData.allBlockbookAddress.push(info);
         }
       );
       return { allAddressData, unspentSequence };
@@ -232,10 +234,10 @@ export default class Monacoin {
     const blockbook = await createBlockbook(this._chain, this._coin);
     let allAddressData: {
       allPaths: string[];
-      allAddressInfo: AddressInfo[];
+      allBlockbookAddress: BlockbookAddress[];
     } = {
       allPaths: [],
-      allAddressInfo: []
+      allBlockbookAddress: []
     };
 
     // 受取アドレスの情報取得
@@ -297,7 +299,7 @@ export default class Monacoin {
       unconfirmedBalance: string;
       txids?: string[];
     }[] = [];
-    allAddressData.allAddressInfo.forEach(
+    allAddressData.allBlockbookAddress.forEach(
       (info, index): void => {
         addressInfo.push({
           address: info.address,

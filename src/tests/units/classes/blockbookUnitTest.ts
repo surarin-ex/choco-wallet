@@ -37,7 +37,7 @@ describe("Blockbook のユニットテスト", (): void => {
       }
     );
     it("取引実績のあるアドレス情報を取得できる", async (): Promise<void> => {
-      const addressInfo = await blockbook.getAddressInfo(
+      const addressInfo = await blockbook.getBlockbookAddress(
         "pTUe8n9ZGgXybNc9z4Xi1BcPAWeUpnqd4n"
       );
       assert.deepEqual(addressInfo.page, 1);
@@ -62,7 +62,7 @@ describe("Blockbook のユニットテスト", (): void => {
       ]);
     });
     it("取引実績のないアドレス情報を取得できる", async (): Promise<void> => {
-      const addressInfo = await blockbook.getAddressInfo(
+      const addressInfo = await blockbook.getBlockbookAddress(
         "pNdFKgQTK1PFeeBiBfbY9MpDouCbNRmAyt"
       );
       assert.deepEqual(addressInfo.page, 1);
@@ -129,7 +129,7 @@ describe("Blockbook のユニットテスト", (): void => {
       }
     );
     it("複数のアドレス情報を取得できる", async (): Promise<void> => {
-      const addressInfos = await blockbook.getAddressInfos(addresses);
+      const addressInfos = await blockbook.getBlockbookAddresses(addresses);
       for (let addressInfo of addressInfos) {
         assert.deepInclude(addresses, addressInfo.address);
       }

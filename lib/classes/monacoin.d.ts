@@ -43,7 +43,7 @@ export default class Monacoin {
      * gap limit を補償するために使用する未使用アドレスの連続数を計算して返り値として返す。
      * @type {object} allAddressData - アドレス情報とそのパスをまとめたオブジェクト
      * @property {string[]} allPaths パスの配列
-     * @property {AddressInfo[]} allAddressInfo blockbookから取得するアドレス情報の格納先
+     * @property {BlockbookAddress[]} allBlockbookAddress blockbookから取得するアドレス情報の格納先
      * @type {object} options 引数のオブジェクト
      * @property {object} blockbook Blockbookオブジェクト
      * @property {object} allAddressData アドレス情報とパスをまとめたオブジェクト

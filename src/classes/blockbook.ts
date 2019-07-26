@@ -1,7 +1,7 @@
 import endpointList from "../conf/blockbookList";
 import axios from "axios";
 
-export interface AddressInfo {
+export interface BlockbookAddress {
   page: number;
   totalPages: number;
   itemsOnPage: number;
@@ -91,7 +91,7 @@ export class Blockbook {
    * アドレス情報を取得するメソッド
    * @param address アドレス
    */
-  public async getAddressInfo(address: string): Promise<AddressInfo> {
+  public async getBlockbookAddress(address: string): Promise<BlockbookAddress> {
     try {
       const uri = `${this.endpoint}v2/address/${address}`;
       const res = await axios.get(uri);
@@ -105,11 +105,13 @@ export class Blockbook {
    * 複数のアドレス情報を取得するメソッド
    * @param addresses アドレスリスト
    */
-  public async getAddressInfos(addresses: string[]): Promise<AddressInfo[]> {
+  public async getBlockbookAddresses(
+    addresses: string[]
+  ): Promise<BlockbookAddress[]> {
     try {
-      const promises: Promise<AddressInfo>[] = [];
+      const promises: Promise<BlockbookAddress>[] = [];
       for (let address of addresses) {
-        promises.push(this.getAddressInfo(address));
+        promises.push(this.getBlockbookAddress(address));
       }
       const addressInfos = await Promise.all(promises);
       return addressInfos;

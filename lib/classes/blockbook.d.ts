@@ -1,4 +1,4 @@
-export interface AddressInfo {
+export interface BlockbookAddress {
     page: number;
     totalPages: number;
     itemsOnPage: number;
@@ -53,12 +53,12 @@ export declare class Blockbook {
      * アドレス情報を取得するメソッド
      * @param address アドレス
      */
-    getAddressInfo(address: string): Promise<AddressInfo>;
+    getBlockbookAddress(address: string): Promise<BlockbookAddress>;
     /**
      * 複数のアドレス情報を取得するメソッド
      * @param addresses アドレスリスト
      */
-    getAddressInfos(addresses: string[]): Promise<AddressInfo[]>;
+    getBlockbookAddresses(addresses: string[]): Promise<BlockbookAddress[]>;
     /**
      * トランザクション情報を取得するメソッド
      * @param txid トランザクション ID
