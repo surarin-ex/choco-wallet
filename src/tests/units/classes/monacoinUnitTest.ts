@@ -145,6 +145,14 @@ describe.only("Monacoin のユニットテスト", (): void => {
       );
       assert.deepEqual(monacoin.balance, "499950200");
       assert.deepEqual(monacoin.balanceReadable, "4.999502");
+      assert.deepEqual(
+        monacoin.receiveAddress,
+        monacoin.addressInfos.find(
+          (info): boolean => {
+            return !info.isChange && !info.isSpent;
+          }
+        ).address
+      );
     });
   });
   describe("updateTxInfos() のユニットテスト", (): void => {

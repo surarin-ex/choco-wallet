@@ -48,6 +48,7 @@ export default class Monacoin {
     txInfos: TxInfo[];
     balance: string;
     balanceReadable: string;
+    receiveAddress: string;
     readonly displayUnit: string;
     readonly balanceUnit: string;
     private _seed;
@@ -109,6 +110,11 @@ export default class Monacoin {
      * updateAddressInfos()が未実行の場合"0"を返す
      */
     private _updateBalance;
+    /**
+     * 受取用アドレスにおつりフラグが立っておらず、未使用のアドレスをセットする。
+     * ※addressInfosプロパティがindexの小さい順に並んでいることを前提としている
+     */
+    private _setReceiveAddress;
     /**
      * GAP_LIMITまでの全アドレス情報を取得するメソッド。
      * 取得したアドレス情報はインスタンスのプロパティに格納され、返り値としても渡される

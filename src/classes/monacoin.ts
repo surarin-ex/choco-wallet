@@ -88,6 +88,7 @@ export default class Monacoin {
   public txInfos: TxInfo[];
   public balance: string;
   public balanceReadable: string;
+  public receiveAddress: string;
   public readonly displayUnit: string;
   public readonly balanceUnit: string;
   private _seed: Buffer;
@@ -276,6 +277,19 @@ export default class Monacoin {
   }
 
   /**
+   * 受取用アドレスにおつりフラグが立っておらず、未使用のアドレスをセットする。
+   * ※addressInfosプロパティがindexの小さい順に並んでいることを前提としている
+   */
+  private _setReceiveAddress(): void {
+    const receiveAddressInfo = this.addressInfos.find(
+      (info): boolean => {
+        return !info.isChange && !info.isSpent;
+      }
+    );
+    this.receiveAddress = receiveAddressInfo.address;
+  }
+
+  /**
    * GAP_LIMITまでの全アドレス情報を取得するメソッド。
    * 取得したアドレス情報はインスタンスのプロパティに格納され、返り値としても渡される
    * @type {object} options 引数のオブジェクト
@@ -364,6 +378,7 @@ export default class Monacoin {
     );
     this.addressInfos = addressInfos;
     this._updateBalance();
+    this._setReceiveAddress();
   }
 
   /**
