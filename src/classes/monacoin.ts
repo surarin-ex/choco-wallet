@@ -48,11 +48,44 @@ export interface AddressInfo {
   txids?: string[];
 }
 
+export interface TxInfo {
+  txid: string;
+  version: number;
+  lockTime: number;
+  vin: {
+    txid: string;
+    vout?: number; // vout === 0 のときに省略される
+    sequence: number;
+    n: number;
+    addresses: string[];
+    isAddress: boolean;
+    value: string;
+    hex: string;
+  }[];
+  vout: {
+    value: string;
+    n: number;
+    hex: string;
+    addresses: string[];
+    isAddress: boolean;
+  }[];
+  blockHash: string;
+  blockHeight: number;
+  confirmations: number;
+  blockTime: number;
+  value: string;
+  valueIn: string;
+  fees: string;
+  hex: string;
+}
+
 /**
  * Monacoinのクラス
  */
 export default class Monacoin {
+  public blockbook: Blockbook;
   public addressInfos: AddressInfo[];
+  public txInfos: TxInfo[];
   public balance: string;
   public balanceReadable: string;
   public readonly displayUnit: string;
@@ -74,6 +107,7 @@ export default class Monacoin {
   };
   private _pathBase: string;
   public constructor(mnemonic: string, chain: "main" | "test" = "main") {
+    this.blockbook = null;
     this.addressInfos = [];
     this.balance = "0";
     this.displayUnit = "MONA";
@@ -178,7 +212,6 @@ export default class Monacoin {
    * @property {number} unspentSequence 未使用アドレスの連続数
    */
   private async _getAddressData(options: {
-    blockbook: Blockbook;
     allAddressData: {
       allPaths: string[];
       allBlockbookAddresses: BlockbookAddress[];
@@ -202,7 +235,7 @@ export default class Monacoin {
         options.length
       );
       const addresses = this.getAddresses(paths);
-      const addressInfos = await options.blockbook.getBlockbookAddresses(
+      const addressInfos = await this.blockbook.getBlockbookAddresses(
         addresses
       );
       const unspentSequence = this._getUnspentAddressSequence(
@@ -259,7 +292,7 @@ export default class Monacoin {
       changeAddressNum: GAP_LIMIT_CHANGE
     }
   ): Promise<void> {
-    const blockbook = await createBlockbook(this._chain, this._coin);
+    this.blockbook = await createBlockbook(this._chain, this._coin);
     let allAddressData: {
       allPaths: string[];
       allBlockbookAddresses: BlockbookAddress[];
@@ -271,7 +304,6 @@ export default class Monacoin {
     // 受取アドレスの情報取得
     let unspentSequence: number;
     ({ allAddressData, unspentSequence } = await this._getAddressData({
-      blockbook,
       allAddressData,
       isChange: 0,
       startIndex: 0,
@@ -283,7 +315,6 @@ export default class Monacoin {
     while (unspentSequence < GAP_LIMIT_RECEIVING) {
       const length = Math.max(GAP_LIMIT_RECEIVING - unspentSequence, 0);
       ({ allAddressData, unspentSequence } = await this._getAddressData({
-        blockbook,
         allAddressData,
         isChange: 0,
         startIndex: nextIndex,
@@ -295,7 +326,6 @@ export default class Monacoin {
 
     // おつりアドレスの情報取得
     ({ allAddressData, unspentSequence } = await this._getAddressData({
-      blockbook,
       allAddressData,
       isChange: 1,
       startIndex: 0,
@@ -306,7 +336,6 @@ export default class Monacoin {
     while (unspentSequence < GAP_LIMIT_CHANGE) {
       const length = Math.max(GAP_LIMIT_CHANGE - unspentSequence, 0);
       ({ allAddressData, unspentSequence } = await this._getAddressData({
-        blockbook,
         allAddressData,
         isChange: 1,
         startIndex: nextIndex,
@@ -335,5 +364,29 @@ export default class Monacoin {
     );
     this.addressInfos = addressInfos;
     this._updateBalance();
+  }
+
+  /**
+   * トランザクション情報をBlockbookから取得して、プロパティのtxInfosを更新するメソッド
+   */
+  public async updateTxInfos(): Promise<void> {
+    if (this.addressInfos.length === 0) {
+      await this.updateAddressInfos();
+    }
+    // 重複を除去したtxidの配列を取得
+    let dupTxids = [];
+    this.addressInfos.forEach(
+      (info): void => {
+        if (info.txids) {
+          dupTxids = dupTxids.concat(info.txids);
+        }
+      }
+    );
+    const txids = dupTxids.filter(
+      (address, index, addresses): boolean => {
+        return addresses.indexOf(address) === index;
+      }
+    );
+    this.txInfos = await this.blockbook.getBlockbookTxs(txids);
   }
 }

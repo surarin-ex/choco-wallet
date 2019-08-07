@@ -1,7 +1,7 @@
 import Monacoin from "../../../classes/monacoin";
 import { assert } from "chai";
 
-describe("Monacoin のユニットテスト", (): void => {
+describe.only("Monacoin のユニットテスト", (): void => {
   describe("getPath() のユニットテスト", (): void => {
     let monacoin: Monacoin;
     before(
@@ -101,7 +101,7 @@ describe("Monacoin のユニットテスト", (): void => {
       assert.deepEqual(addresses, []);
     });
   });
-  describe("getAllAddressInfo() のユニットテスト", (): void => {
+  describe("updateAddressInfos() のユニットテスト", (): void => {
     let monacoin: Monacoin;
     before(
       "インスタンス作成",
@@ -145,6 +145,22 @@ describe("Monacoin のユニットテスト", (): void => {
       );
       assert.deepEqual(monacoin.balance, "499950200");
       assert.deepEqual(monacoin.balanceReadable, "4.999502");
+    });
+  });
+  describe("updateTxInfos() のユニットテスト", (): void => {
+    let monacoin: Monacoin;
+    before(
+      "インスタンス作成",
+      (): void => {
+        monacoin = new Monacoin(
+          "むける　とかい　はんこ　ぐあい　きけんせい　ほそい　さゆう　そぼく　たいてい　さくら　とおか　はろうぃん",
+          "test"
+        );
+      }
+    );
+    it("トランザクション情報が更新される", async (): Promise<void> => {
+      await monacoin.updateTxInfos();
+      assert.deepEqual(monacoin.txInfos.length, 4);
     });
   });
 });
