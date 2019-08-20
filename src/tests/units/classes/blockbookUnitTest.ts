@@ -181,4 +181,22 @@ describe("Blockbook のユニットテスト", (): void => {
       );
     });
   });
+  describe("estimateBlockbookFeeRate() のユニットテスト", (): void => {
+    let blockbook: Blockbook;
+    before(
+      "mainnetで初期化",
+      async (): Promise<void> => {
+        blockbook = await createBlockbook("main", "Monacoin");
+      }
+    );
+    it("手数料率を取得できる", async (): Promise<void> => {
+      try {
+        const feeRate = await blockbook.estimateBlockbookFeeRate(2);
+        assert.isNotNaN(Number(feeRate), `feeRate: ${feeRate}`);
+      } catch (err) {
+        console.log(err);
+        throw new Error("feeRateの取得に失敗");
+      }
+    });
+  });
 });

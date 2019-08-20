@@ -49,6 +49,7 @@ export default class Monacoin {
     balance: string;
     balanceReadable: string;
     receiveAddress: string;
+    changeAddress: string;
     readonly displayUnit: string;
     readonly balanceUnit: string;
     private _seed;
@@ -116,6 +117,11 @@ export default class Monacoin {
      */
     private _setReceiveAddress;
     /**
+     * おつり用アドレスにおつりフラグが立っていて、未使用のアドレスをセットする。
+     * ※addressInfosプロパティがindexの小さい順に並んでいることを前提としている
+     */
+    private _setChangeAddress;
+    /**
      * GAP_LIMITまでの全アドレス情報を取得するメソッド。
      * 取得したアドレス情報はインスタンスのプロパティに格納され、返り値としても渡される
      * @type {object} options 引数のオブジェクト
@@ -131,4 +137,10 @@ export default class Monacoin {
      * トランザクション情報をBlockbookから取得して、プロパティのtxInfosを更新するメソッド
      */
     updateTxInfos(): Promise<void>;
+    /**
+     * 妥当な手数料率を数値文字列で取得する。単位は watanabe / byte。
+     * 最低の手数料率は 150 watanabe / byte。
+     * @param speed ブロックに取り込まれるまでの速さの指定
+     */
+    estimateFeeRate(speed: "fast" | "normal" | "slow"): Promise<string>;
 }

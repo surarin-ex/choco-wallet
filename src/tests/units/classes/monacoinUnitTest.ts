@@ -1,5 +1,6 @@
 import Monacoin from "../../../classes/monacoin";
 import { assert } from "chai";
+import BigNumber from "bignumber.js";
 
 describe.only("Monacoin のユニットテスト", (): void => {
   describe("getPath() のユニットテスト", (): void => {
@@ -153,6 +154,14 @@ describe.only("Monacoin のユニットテスト", (): void => {
           }
         ).address
       );
+      assert.deepEqual(
+        monacoin.changeAddress,
+        monacoin.addressInfos.find(
+          (info): boolean => {
+            return info.isChange && !info.isSpent;
+          }
+        ).address
+      );
     });
   });
   describe("updateTxInfos() のユニットテスト", (): void => {
@@ -169,6 +178,33 @@ describe.only("Monacoin のユニットテスト", (): void => {
     it("トランザクション情報が更新される", async (): Promise<void> => {
       await monacoin.updateTxInfos();
       assert.deepEqual(monacoin.txInfos.length, 4);
+    });
+  });
+  describe("estimateFeeRate() のユニットテスト", (): void => {
+    let monacoin: Monacoin;
+    before(
+      "インスタンス作成",
+      (): void => {
+        monacoin = new Monacoin(
+          "むける　とかい　はんこ　ぐあい　きけんせい　ほそい　さゆう　そぼく　たいてい　さくら　とおか　はろうぃん",
+          "main"
+        );
+      }
+    );
+    it("150watanabe/byte以上の手数料が取得される", async (): Promise<void> => {
+      const feeRate = await monacoin.estimateFeeRate("slow");
+      assert.isTrue(new BigNumber(feeRate).gte(150));
+    });
+    it("fast normal slow の順に手数料が小さくなる", async (): Promise<void> => {
+      const feeRate_fast = await monacoin.estimateFeeRate("fast");
+      const feeRate_normal = await monacoin.estimateFeeRate("normal");
+      const feeRate_slow = await monacoin.estimateFeeRate("slow");
+      assert.isTrue(
+        new BigNumber(feeRate_fast).gte(new BigNumber(feeRate_normal))
+      );
+      assert.isTrue(
+        new BigNumber(feeRate_normal).gte(new BigNumber(feeRate_slow))
+      );
     });
   });
 });

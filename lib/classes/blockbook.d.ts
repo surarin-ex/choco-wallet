@@ -69,6 +69,12 @@ export declare class Blockbook {
      * @param txids トランザクション IDの配列
      */
     getBlockbookTxs(txids: string[]): Promise<BlockbookTx[]>;
+    /**
+     * 手数料のレートを数値の文字列で取得する。単位は MONA/kB。
+     * APIのバージョンがv1なので、注意が必要
+     * @param numberOfBlocks トランザクションが承認されるまでに許容するブロック数
+     */
+    estimateBlockbookFeeRate(numberOfBlocks: number): Promise<string>;
 }
 /**
  * Blockbookのクラスをインスタンス化する関数

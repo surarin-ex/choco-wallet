@@ -89,6 +89,7 @@ export default class Monacoin {
   public balance: string;
   public balanceReadable: string;
   public receiveAddress: string;
+  public changeAddress: string;
   public readonly displayUnit: string;
   public readonly balanceUnit: string;
   private _seed: Buffer;
@@ -290,6 +291,19 @@ export default class Monacoin {
   }
 
   /**
+   * おつり用アドレスにおつりフラグが立っていて、未使用のアドレスをセットする。
+   * ※addressInfosプロパティがindexの小さい順に並んでいることを前提としている
+   */
+  private _setChangeAddress(): void {
+    const changeAddressInfo = this.addressInfos.find(
+      (info): boolean => {
+        return info.isChange && !info.isSpent;
+      }
+    );
+    this.changeAddress = changeAddressInfo.address;
+  }
+
+  /**
    * GAP_LIMITまでの全アドレス情報を取得するメソッド。
    * 取得したアドレス情報はインスタンスのプロパティに格納され、返り値としても渡される
    * @type {object} options 引数のオブジェクト
@@ -379,6 +393,7 @@ export default class Monacoin {
     this.addressInfos = addressInfos;
     this._updateBalance();
     this._setReceiveAddress();
+    this._setChangeAddress();
   }
 
   /**
@@ -404,4 +419,45 @@ export default class Monacoin {
     );
     this.txInfos = await this.blockbook.getBlockbookTxs(txids);
   }
+
+  /**
+   * 妥当な手数料率を数値文字列で取得する。単位は watanabe / byte。
+   * 最低の手数料率は 150 watanabe / byte。
+   * @param speed ブロックに取り込まれるまでの速さの指定
+   */
+  public async estimateFeeRate(
+    speed: "fast" | "normal" | "slow"
+  ): Promise<string> {
+    if (!this.blockbook) {
+      this.blockbook = await createBlockbook(this._chain, this._coin);
+    }
+    let numberOfBlocks: number;
+    switch (speed) {
+      case "fast":
+        numberOfBlocks = 2;
+        break;
+      case "normal":
+        numberOfBlocks = 5;
+        break;
+      case "slow":
+        numberOfBlocks = 20;
+        break;
+      default:
+        numberOfBlocks = 2;
+    }
+    const feeRate_MONA_kB = await this.blockbook.estimateBlockbookFeeRate(
+      numberOfBlocks
+    );
+    const feeRate_WATANABE_B = new BigNumber(feeRate_MONA_kB).times(100000);
+    const feeRate = feeRate_WATANABE_B.gt(150)
+      ? feeRate_WATANABE_B.toString()
+      : "150";
+    return feeRate;
+  }
+
+  // public createUnsignedTx(options: {
+  //   toAddress: string; // 送金先アドレス
+  //   amount: string; //送金額
+  //   feeRate: number; // 手数料率 watanabe/Byte
+  // }): void {}
 }

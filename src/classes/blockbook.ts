@@ -150,6 +150,23 @@ export class Blockbook {
       throw err;
     }
   }
+
+  /**
+   * 手数料のレートを数値の文字列で取得する。単位は MONA/kB。
+   * APIのバージョンがv1なので、注意が必要
+   * @param numberOfBlocks トランザクションが承認されるまでに許容するブロック数
+   */
+  public async estimateBlockbookFeeRate(
+    numberOfBlocks: number
+  ): Promise<string> {
+    try {
+      const uri = `${this.endpoint}v1/estimatefee/${numberOfBlocks}`;
+      const res = await axios.get(uri);
+      return res.data.result;
+    } catch (err) {
+      throw err;
+    }
+  }
 }
 
 /**
