@@ -1,8 +1,9 @@
 import Monacoin from "../../../classes/monacoin";
 import { assert } from "chai";
 import BigNumber from "bignumber.js";
+import estimateTxBytes from "../../../functions/estimateTxBytes";
 
-describe.only("Monacoin のユニットテスト", (): void => {
+describe("Monacoin のユニットテスト", (): void => {
   describe("getPath() のユニットテスト", (): void => {
     let monacoin: Monacoin;
     before(
@@ -192,19 +193,257 @@ describe.only("Monacoin のユニットテスト", (): void => {
       }
     );
     it("150watanabe/byte以上の手数料が取得される", async (): Promise<void> => {
-      const feeRate = await monacoin.estimateFeeRate("slow");
+      const feeRate = await monacoin.estimateFeeRate("min");
       assert.isTrue(new BigNumber(feeRate).gte(150));
     });
-    it("fast normal slow の順に手数料が小さくなる", async (): Promise<void> => {
+    it("fast normal slow min の順に手数料が小さくなる", async (): Promise<
+      void
+    > => {
       const feeRate_fast = await monacoin.estimateFeeRate("fast");
       const feeRate_normal = await monacoin.estimateFeeRate("normal");
       const feeRate_slow = await monacoin.estimateFeeRate("slow");
+      const feeRate_min = await monacoin.estimateFeeRate("min");
       assert.isTrue(
         new BigNumber(feeRate_fast).gte(new BigNumber(feeRate_normal))
       );
       assert.isTrue(
         new BigNumber(feeRate_normal).gte(new BigNumber(feeRate_slow))
       );
+      assert.isTrue(
+        new BigNumber(feeRate_slow).gte(new BigNumber(feeRate_min))
+      );
+      assert.isTrue(
+        new BigNumber(feeRate_min).gte(new BigNumber(monacoin.minFeeRate))
+      );
+    });
+  });
+  describe("createUnsignedTx() のユニットテスト", (): void => {
+    let monacoin: Monacoin;
+    before(
+      "インスタンス作成",
+      (): void => {
+        monacoin = new Monacoin(
+          "なめらか　からい　ひやけ　げきか　なにごと　かわら　こもち　おおや　おもう　こうかん　れいぎ　とそう",
+          "test"
+        );
+      }
+    );
+    it("unsignedTxに含まれるデータの整合性が取れている", async (): Promise<
+      void
+    > => {
+      await monacoin.updateUnsignedTx({
+        toAddress: "pQ1Lzx4hm7SrnfQ2LWihzB1JLosvC166Hs",
+        amount: "1000000",
+        feeRate: 150
+      });
+      const {
+        amount,
+        amount_mona,
+        fees,
+        fees_mona,
+        feeRate,
+        sumInput,
+        sumInput_mona,
+        inputCount,
+        toAddress
+      } = monacoin.getUnsignedTxSummary();
+      assert.isTrue(
+        new BigNumber(sumInput)
+          .minus(new BigNumber(amount))
+          .minus(new BigNumber(fees))
+          .gte(0)
+      );
+      assert.deepEqual(toAddress, "pQ1Lzx4hm7SrnfQ2LWihzB1JLosvC166Hs");
+      assert.isTrue(inputCount > 0);
+      assert.deepEqual(
+        new BigNumber(amount).dividedBy(monacoin.digit).toString(),
+        amount_mona
+      );
+      assert.deepEqual(
+        new BigNumber(fees).dividedBy(monacoin.digit).toString(),
+        fees_mona
+      );
+      assert.deepEqual(
+        new BigNumber(sumInput).dividedBy(monacoin.digit).toString(),
+        sumInput_mona
+      );
+      assert.deepEqual(feeRate, 150);
+    });
+    it("amountにマイナスを指定するとエラーがthrowされる", async (): Promise<
+      void
+    > => {
+      try {
+        await monacoin.updateUnsignedTx({
+          toAddress: "pQ1Lzx4hm7SrnfQ2LWihzB1JLosvC166Hs",
+          amount: "-1000",
+          feeRate: 150
+        });
+        throw new Error("エラーが発生しませんでした");
+      } catch (err) {
+        assert.deepEqual(err.message, "送金額が不適切です");
+      }
+    });
+    it("amountに小数を指定するとエラーがthrowされる", async (): Promise<
+      void
+    > => {
+      try {
+        await monacoin.updateUnsignedTx({
+          toAddress: "pQ1Lzx4hm7SrnfQ2LWihzB1JLosvC166Hs",
+          amount: "100000.1",
+          feeRate: 150
+        });
+        throw new Error("エラーが発生しませんでした");
+      } catch (err) {
+        assert.deepEqual(err.message, "送金額が不適切です");
+      }
+    });
+    it("amountに数字以外の文字列を指定するとエラーがthrowされる", async (): Promise<
+      void
+    > => {
+      try {
+        await monacoin.updateUnsignedTx({
+          toAddress: "pQ1Lzx4hm7SrnfQ2LWihzB1JLosvC166Hs",
+          amount: "aaa",
+          feeRate: 150
+        });
+        throw new Error("エラーが発生しませんでした");
+      } catch (err) {
+        assert.deepEqual(err.message, "送金額が不適切です");
+      }
+    });
+    it("amountに残高を超える金額を指定するとエラーがthrowされる", async (): Promise<
+      void
+    > => {
+      try {
+        await monacoin.updateUnsignedTx({
+          toAddress: "pQ1Lzx4hm7SrnfQ2LWihzB1JLosvC166Hs",
+          amount: "100000000000",
+          feeRate: 150
+        });
+        throw new Error("エラーが発生しませんでした");
+      } catch (err) {
+        assert.deepEqual(err.message, "残高不足です");
+      }
+    });
+    it("feeRateにminFeeRateを下回る金額を指定するとエラーがthrowされる", async (): Promise<
+      void
+    > => {
+      try {
+        await monacoin.updateUnsignedTx({
+          toAddress: "pQ1Lzx4hm7SrnfQ2LWihzB1JLosvC166Hs",
+          amount: "10000",
+          feeRate: 50
+        });
+        throw new Error("エラーが発生しませんでした");
+      } catch (err) {
+        assert.deepEqual(err.message, "手数料のレートが不適切です");
+      }
+    });
+    it("feeRateに小数を指定するとエラーがthrowされる", async (): Promise<
+      void
+    > => {
+      try {
+        await monacoin.updateUnsignedTx({
+          toAddress: "pQ1Lzx4hm7SrnfQ2LWihzB1JLosvC166Hs",
+          amount: "10000",
+          feeRate: 200.5
+        });
+        throw new Error("エラーが発生しませんでした");
+      } catch (err) {
+        assert.deepEqual(err.message, "手数料のレートが不適切です");
+      }
+    });
+    it("送金額がインプットの合計と手数料の和と一致する場合におつりアドレスへの送金がなくなる", async (): Promise<
+      void
+    > => {
+      await monacoin.updateAddressInfos();
+      await monacoin.updateTxInfos();
+      await monacoin.updateUnsignedTx({
+        toAddress: "pQ1Lzx4hm7SrnfQ2LWihzB1JLosvC166Hs",
+        amount: "1000000",
+        feeRate: 150
+      });
+      const summary = monacoin.getUnsignedTxSummary();
+      const estimateFees =
+        estimateTxBytes({ "P2SH-P2WPKH": summary.inputCount }, { P2SH: 1 }) *
+        150;
+      await monacoin.updateUnsignedTx({
+        toAddress: "pQ1Lzx4hm7SrnfQ2LWihzB1JLosvC166Hs",
+        amount: new BigNumber(summary.sumInput).minus(estimateFees).toString(),
+        feeRate: 150
+      });
+      monacoin.signTx();
+      const signedSummary = monacoin.getSignedTxSummary();
+      assert.isNull(signedSummary.change);
+    });
+  });
+  describe("signTx() のユニットテスト", (): void => {
+    let monacoin: Monacoin;
+    beforeEach(
+      "インスタンス作成",
+      async (): Promise<void> => {
+        monacoin = new Monacoin(
+          "なめらか　からい　ひやけ　げきか　なにごと　かわら　こもち　おおや　おもう　こうかん　れいぎ　とそう",
+          "test"
+        );
+        await monacoin.updateUnsignedTx({
+          toAddress: "pQ1Lzx4hm7SrnfQ2LWihzB1JLosvC166Hs",
+          amount: "1000000",
+          feeRate: 150
+        });
+      }
+    );
+    afterEach(
+      (): void => {
+        monacoin.deleteSignedTx();
+      }
+    );
+    it("署名後のトランザクションの情報が取得できる", (): void => {
+      monacoin.signTx();
+      const summary = monacoin.getSignedTxSummary();
+      assert.deepEqual(
+        summary.outs[0].address,
+        "pQ1Lzx4hm7SrnfQ2LWihzB1JLosvC166Hs"
+      );
+      assert.deepEqual(summary.change.address, monacoin.changeAddress);
+      assert.deepEqual(summary.amount, "1000000");
+      assert.deepEqual(summary.configuredFeeRate, 150);
+      assert.isTrue(
+        Math.abs((summary.confirmedFeeRate - 150) / summary.confirmedFeeRate) <
+          0.02
+      ); // 実際のfeeRateと指定したfeeRateの誤差が2%以内
+    });
+  });
+  describe("broadcastTx() のユニットテスト", (): void => {
+    let monacoin: Monacoin;
+    beforeEach(
+      "インスタンス作成",
+      async (): Promise<void> => {
+        monacoin = new Monacoin(
+          "なめらか　からい　ひやけ　げきか　なにごと　かわら　こもち　おおや　おもう　こうかん　れいぎ　とそう",
+          "test"
+        );
+        await monacoin.updateUnsignedTx({
+          toAddress: "pQ1Lzx4hm7SrnfQ2LWihzB1JLosvC166Hs",
+          amount: "1000000",
+          feeRate: 150
+        });
+        await monacoin.signTx();
+      }
+    );
+    it("署名済みトランザクションがない場合、nullが返される", async (): Promise<
+      void
+    > => {
+      monacoin.deleteSignedTx();
+      const txid = await monacoin.broadcastTx();
+      assert.isNull(txid);
+    });
+    it("トランザクションを送信するとtxidが返される", async (): Promise<
+      void
+    > => {
+      const summary = monacoin.getSignedTxSummary();
+      const txid = await monacoin.broadcastTx();
+      assert.deepEqual(txid, summary.txid);
     });
   });
 });

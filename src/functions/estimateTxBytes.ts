@@ -11,10 +11,10 @@ const estimateTxBytes = (
     "P2SH-P2WPKH"?: number;
   },
   outputs: {
-    P2SH: number;
-    P2PKH: number;
-    P2WPKH: number;
-    P2WSH: number;
+    P2SH?: number;
+    P2PKH?: number;
+    P2WPKH?: number;
+    P2WSH?: number;
   }
 ): number => {
   let totalWeight = 0;

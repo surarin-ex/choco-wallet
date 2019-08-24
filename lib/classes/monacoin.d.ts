@@ -52,12 +52,17 @@ export default class Monacoin {
     changeAddress: string;
     readonly displayUnit: string;
     readonly balanceUnit: string;
+    readonly addressType: string;
+    readonly minFeeRate: string;
+    readonly digit: number;
     private _seed;
     private _node;
     private _chain;
     private _coin;
     private _network;
     private _pathBase;
+    private unsignedTx;
+    private signedTx;
     constructor(mnemonic: string, chain?: "main" | "test");
     /**
      * おつりフラグとアドレスインデックスを指定してbip32のpathを取得する
@@ -72,6 +77,11 @@ export default class Monacoin {
      * @param length 長さ、10を指定するとaddressIndex〜addressIndex+9までの10要素の配列が取得できる
      */
     getPaths(changeFlag: 0 | 1, addressIndex: number, length: number): string[];
+    /**
+     * bip32のpathを指定してTXの作成に使用可能なPaymentオブジェクトを取得する
+     * @param path bip32のpath
+     */
+    private _getPaymentFromPath;
     /**
      * bip32のpathを指定してアドレスを取得する
      * @param path bip32のpath
@@ -142,5 +152,103 @@ export default class Monacoin {
      * 最低の手数料率は 150 watanabe / byte。
      * @param speed ブロックに取り込まれるまでの速さの指定
      */
-    estimateFeeRate(speed: "fast" | "normal" | "slow"): Promise<string>;
+    estimateFeeRate(speed: "fast" | "normal" | "slow" | "min"): Promise<string>;
+    /**
+     * UTXOを取得するメソッド。
+     * txInfosが未取得の場合は空配列を返す。
+     * 返り値はkey-valueオブジェクトの配列で、keyは"txid:vout"、valueはwatanabe単位の金額の数値文字列
+     */
+    private _getUtxos;
+    /**
+     * UTXOをbitcoinjs-libのWitnessUtxoの型に変換するメソッド
+     * @param utxo Utxoオブジェクト
+     */
+    private _getWitnessUtxo;
+    /**
+     * bitcoinjs-libのPaymentに追加するためのInputDataを作成するメソッド
+     * @param utxo Utxoオブジェクト
+     * @param payment bitcoinjs-libのPaymentオブジェクト
+     * @param isSegwit Segwitか否かを表すフラグ
+     * @param redeemType redeemscriptのタイプ "p2sh" "p2wsh" "p2sh-p2wsh"
+     */
+    private _getInputData;
+    /**
+     * 送金先のアドレスからアウトプットのタイプを取得するメソッド。
+     * "p2pkh", "p2sh", "p2wpkh", "p2wsh"のいずれかが得られる
+     * @param toAddress 送金先のアドレス
+     */
+    private _getOutputType;
+    /**
+     * PSBTに追加するためのoutputデータを作成するメソッド
+     * @param toAddress 送金先のアドレス
+     * @param amount 金額 watanabe単位
+     */
+    private _getOutputData;
+    /**
+     * トランザクションの生成に必要なUTXOを選択するとともに、手数料を推定するメソッド
+     * @param options 引数オブジェクト
+     */
+    private _selectUtxos;
+    /**
+     * 未署名トランザクションを生成し、プロパティのunsignedTxにセットするメソッド
+     * @param options 引数オブジェクト
+     */
+    updateUnsignedTx(options: {
+        toAddress: string;
+        amount: string;
+        feeRate: number;
+    }): Promise<void>;
+    /**
+     * 未署名トランザクションの概要を取得するメソッド
+     */
+    getUnsignedTxSummary(): {
+        amount: string;
+        amount_mona: string;
+        fees: string;
+        fees_mona: string;
+        sumInput: string;
+        sumInput_mona: string;
+        feeRate: number;
+        inputCount: number;
+        toAddress: string;
+    };
+    /**
+     * 未署名トランザクションに署名するメソッド
+     */
+    signTx(): void;
+    /**
+     * 署名済みトランザクションの概要を取得する
+     */
+    getSignedTxSummary(): {
+        txid: string;
+        byteLength: number;
+        vsize: number;
+        weight: number;
+        amount: string;
+        amount_mona: string;
+        fees: string;
+        fees_mona: string;
+        confirmedFeeRate: number;
+        configuredFeeRate: number;
+        outs: {
+            address: string;
+            amount: string;
+            amount_mona: string;
+        }[];
+        change: {
+            address: string;
+            amount: string;
+            amount_mona: string;
+        };
+        txHex: string;
+    };
+    /**
+     * 署名済みトランザクションをnullにセットする
+     */
+    deleteSignedTx(): void;
+    /**
+     * 署名済みのトランザクションブロードキャストするメソッド。
+     * ブロードキャストに成功した場合txidを返し、署名済みトランザクションを破棄する
+     */
+    broadcastTx(): Promise<string>;
 }

@@ -167,6 +167,20 @@ export class Blockbook {
       throw err;
     }
   }
+
+  /**
+   * txをブロードキャストするメソッド
+   * @param txHex ブロードキャストするtxの16進数データ
+   */
+  public async broadcastTx(txHex: string): Promise<string> {
+    try {
+      const uri = `${this.endpoint}v2/sendtx/${txHex}`;
+      const res = await axios.get(uri);
+      return res.data.result;
+    } catch (err) {
+      throw err;
+    }
+  }
 }
 
 /**

@@ -9,9 +9,9 @@ declare const estimateTxBytes: (inputs: {
     P2WPKH?: number;
     "P2SH-P2WPKH"?: number;
 }, outputs: {
-    P2SH: number;
-    P2PKH: number;
-    P2WPKH: number;
-    P2WSH: number;
+    P2SH?: number;
+    P2PKH?: number;
+    P2WPKH?: number;
+    P2WSH?: number;
 }) => number;
 export default estimateTxBytes;

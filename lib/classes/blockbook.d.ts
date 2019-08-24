@@ -75,6 +75,11 @@ export declare class Blockbook {
      * @param numberOfBlocks トランザクションが承認されるまでに許容するブロック数
      */
     estimateBlockbookFeeRate(numberOfBlocks: number): Promise<string>;
+    /**
+     * txをブロードキャストするメソッド
+     * @param txHex ブロードキャストするtxの16進数データ
+     */
+    broadcastTx(txHex: string): Promise<string>;
 }
 /**
  * Blockbookのクラスをインスタンス化する関数

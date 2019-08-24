@@ -1,6 +1,7 @@
 import createBlockbook, { Blockbook } from "../../../classes/blockbook";
 import endpointList from "../../../conf/blockbookList";
 import { assert } from "chai";
+import { Monacoin } from "../../..";
 
 describe("Blockbook のユニットテスト", (): void => {
   describe("createBlockbook() のユニットテスト", async (): Promise<void> => {
@@ -197,6 +198,48 @@ describe("Blockbook のユニットテスト", (): void => {
         console.log(err);
         throw new Error("feeRateの取得に失敗");
       }
+    });
+  });
+  describe.only("broadcastTx() のユニットテスト", (): void => {
+    let blockbook: Blockbook;
+    before(
+      "testnetで初期化",
+      async (): Promise<void> => {
+        blockbook = await createBlockbook("test", "Monacoin");
+      }
+    );
+    it("形式的に誤ったtxを送信した場合にエラーが返される", async (): Promise<
+      void
+    > => {
+      try {
+        await blockbook.broadcastTx("aaaaa");
+        throw new Error("エラーが返されませんでした");
+      } catch (err) {
+        assert.notDeepEqual(err.message, "エラーが返されませんでした");
+      }
+    });
+    it("正しいトランザクションを送信するとresultが返され、blockbookからtx情報を参照するために利用できる", async (): Promise<
+      void
+    > => {
+      let monacoin: Monacoin;
+      monacoin = new Monacoin(
+        "なめらか　からい　ひやけ　げきか　なにごと　かわら　こもち　おおや　おもう　こうかん　れいぎ　とそう",
+        "test"
+      );
+      await monacoin.updateUnsignedTx({
+        toAddress: "pQ1Lzx4hm7SrnfQ2LWihzB1JLosvC166Hs",
+        amount: "1000000",
+        feeRate: 150
+      });
+      monacoin.signTx();
+      const summary = monacoin.getSignedTxSummary();
+      const res = await blockbook.broadcastTx(summary.txHex);
+      assert.deepEqual(res, summary.txid);
+      const blockbookTx = await blockbook.getBlockbookTx(res);
+      assert.deepEqual(blockbookTx.txid, res);
+      assert.deepEqual(blockbookTx.confirmations, 0);
+      assert.deepEqual(blockbookTx.fees, summary.fees);
+      assert.deepEqual(blockbookTx.hex, summary.txHex);
     });
   });
 });
