@@ -6,13 +6,26 @@ import * as bclib from "bitcoinjs-lib";
  * 識別できない場合はエラーをthrowする。
  * @param toAddress 送金先のアドレス
  */
-const getOutputType = (toAddress: string): string => {
+const getOutputType = (
+  toAddress: string,
+  network: {
+    wif: number;
+    bip32: {
+      public: number;
+      private: number;
+    };
+    messagePrefix: string;
+    bech32: string;
+    pubKeyHash: number;
+    scriptHash: number;
+  }
+): string => {
   const outputTypes = ["p2pkh", "p2sh", "p2wpkh", "p2wsh"];
   let returnType: string;
   outputTypes.forEach(
     (type): void => {
       try {
-        bclib.payments[type]({ address: toAddress, network: this._network });
+        bclib.payments[type]({ address: toAddress, network });
         returnType = type;
         return;
       } catch (ignoredErr) {

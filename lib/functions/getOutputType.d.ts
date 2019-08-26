@@ -4,5 +4,15 @@
  * 識別できない場合はエラーをthrowする。
  * @param toAddress 送金先のアドレス
  */
-declare const getOutputType: (toAddress: string) => string;
+declare const getOutputType: (toAddress: string, network: {
+    wif: number;
+    bip32: {
+        public: number;
+        private: number;
+    };
+    messagePrefix: string;
+    bech32: string;
+    pubKeyHash: number;
+    scriptHash: number;
+}) => string;
 export default getOutputType;

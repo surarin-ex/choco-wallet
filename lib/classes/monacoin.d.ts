@@ -137,13 +137,6 @@ export default class Monacoin {
      */
     private _getInputData;
     /**
-     * 送金先のアドレスからアウトプットのタイプを取得するメソッド。
-     * "p2pkh", "p2sh", "p2wpkh", "p2wsh"のいずれかが得られる。
-     * 識別できない場合はエラーをthrowする。モナコインアドレスを
-     * @param toAddress 送金先のアドレス
-     */
-    getOutputType(toAddress: string): string;
-    /**
      * PSBTに追加するためのoutputデータを作成するメソッド
      * @param toAddress 送金先のアドレス
      * @param amount 金額 watanabe単位

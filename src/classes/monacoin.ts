@@ -16,6 +16,7 @@ import {
 import estimateTxBytes from "../functions/estimateTxBytes";
 import getNetwork from "../functions/getNetwork";
 import getPathBase from "../functions/getPathBase";
+import getOutputType from "../functions/getOutputType";
 import AddressInfo from "../interfaces/addressInfo";
 import TxInfo from "../interfaces/txInfo";
 import Utxo from "../interfaces/utxo";
@@ -546,30 +547,6 @@ export default class Monacoin {
   }
 
   /**
-   * 送金先のアドレスからアウトプットのタイプを取得するメソッド。
-   * "p2pkh", "p2sh", "p2wpkh", "p2wsh"のいずれかが得られる。
-   * 識別できない場合はエラーをthrowする。モナコインアドレスを
-   * @param toAddress 送金先のアドレス
-   */
-  public getOutputType(toAddress: string): string {
-    const outputTypes = ["p2pkh", "p2sh", "p2wpkh", "p2wsh"];
-    let returnType: string;
-    outputTypes.forEach(
-      (type): void => {
-        try {
-          bclib.payments[type]({ address: toAddress, network: this._network });
-          returnType = type;
-          return;
-        } catch (ignoredErr) {
-          // 何もしない
-        }
-      }
-    );
-    if (!returnType) throw new Error("アドレスに誤りがあります");
-    return returnType;
-  }
-
-  /**
    * PSBTに追加するためのoutputデータを作成するメソッド
    * @param toAddress 送金先のアドレス
    * @param amount 金額 watanabe単位
@@ -581,7 +558,7 @@ export default class Monacoin {
     script: Buffer;
     value: number;
   } {
-    const type = this.getOutputType(toAddress);
+    const type = getOutputType(toAddress, this._network);
     const payment = bclib.payments[type]({
       address: toAddress,
       network: this._network
@@ -613,7 +590,10 @@ export default class Monacoin {
     let estimateFees = new BigNumber(0);
     const inputs = { P2PKH: 0, P2WPKH: 0, "P2SH-P2WPKH": 0 };
     const outputs = { P2SH: 0, P2PKH: 0, P2WPKH: 0, P2WSH: 0 };
-    const outputType = this.getOutputType(options.toAddress).toUpperCase();
+    const outputType = getOutputType(
+      options.toAddress,
+      this._network
+    ).toUpperCase();
     outputs[outputType]++;
     const changeType =
       this.addressType.slice(0, 4) === "P2SH" ? "P2SH" : this.addressType;
