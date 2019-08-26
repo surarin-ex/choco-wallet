@@ -637,7 +637,7 @@ export default class Monacoin {
         }
       }
     );
-    if (!returnType) throw new Error("Given address can't be classified");
+    if (!returnType) throw new Error("アドレスに誤りがあります");
     return returnType;
   }
 
