@@ -35,7 +35,7 @@ export default class Monacoin {
   public readonly displayUnit: string;
   public readonly balanceUnit: string;
   public readonly addressType: string;
-  public readonly minFeeRate: string;
+  public readonly minFeeRate: number;
   public readonly digit: number;
   public readonly gapLimitReceiving: number;
   public readonly gapLimitChange: number;
@@ -81,7 +81,7 @@ export default class Monacoin {
     this.displayUnit = "MONA";
     this.balanceUnit = "WATANABE";
     this.addressType = "P2SH-P2WPKH";
-    this.minFeeRate = "150"; // watanabe / byte
+    this.minFeeRate = 150; // watanabe / byte
     this._chain = chain;
     this._coin = "Monacoin";
     this.digit = 100000000;
@@ -413,7 +413,7 @@ export default class Monacoin {
    */
   public async estimateFeeRate(
     speed: "fast" | "normal" | "slow" | "min"
-  ): Promise<string> {
+  ): Promise<number> {
     if (!this.blockbook) {
       this.blockbook = await createBlockbook(this._chain, this._coin);
     }
@@ -438,7 +438,7 @@ export default class Monacoin {
     );
     const feeRate_WATANABE_B = new BigNumber(feeRate_MONA_kB).times(100000);
     const feeRate = feeRate_WATANABE_B.gt(this.minFeeRate)
-      ? feeRate_WATANABE_B.toString()
+      ? feeRate_WATANABE_B.toNumber()
       : this.minFeeRate;
     return feeRate;
   }
@@ -650,7 +650,7 @@ export default class Monacoin {
       throw new Error("送金額が不適切です");
     }
     if (
-      options.feeRate < parseInt(this.minFeeRate) ||
+      options.feeRate < this.minFeeRate ||
       !Number.isInteger(options.feeRate)
     ) {
       throw new Error("手数料のレートが不適切です");

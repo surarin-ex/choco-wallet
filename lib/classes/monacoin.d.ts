@@ -15,7 +15,7 @@ export default class Monacoin {
     readonly displayUnit: string;
     readonly balanceUnit: string;
     readonly addressType: string;
-    readonly minFeeRate: string;
+    readonly minFeeRate: number;
     readonly digit: number;
     readonly gapLimitReceiving: number;
     readonly gapLimitChange: number;
@@ -116,7 +116,7 @@ export default class Monacoin {
      * 最低の手数料率は 150 watanabe / byte。
      * @param speed ブロックに取り込まれるまでの速さの指定
      */
-    estimateFeeRate(speed: "fast" | "normal" | "slow" | "min"): Promise<string>;
+    estimateFeeRate(speed: "fast" | "normal" | "slow" | "min"): Promise<number>;
     /**
      * UTXOを取得するメソッド。
      * txInfosが未取得の場合は空配列を返す。
