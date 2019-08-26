@@ -14,88 +14,11 @@ import {
   TransactionOutput
 } from "bip174/src/lib/interfaces";
 import estimateTxBytes from "../functions/estimateTxBytes";
-
-// Monacoinのパラメータ設定(version prefix: Base58Checkエンコード時に頭に付加する文字列)
-// Monacoin本家のソースコードと同じパラメータを使用すること (https://github.com/monacoinproject/monacoin/blob/master-0.17/src/chainparams.cpp)
-const MONACOIN = {
-  wif: 176,
-  bip32: {
-    public: 77429938,
-    private: 76066276
-  },
-  messagePrefix: "Monacoin Signed Message:\n",
-  bech32: "mona",
-  pubKeyHash: 50, // M
-  scriptHash: 55 // P
-};
-// Monacoin-Testnetのパラメータ設定
-const MONACOIN_TESTNET = {
-  messagePrefix: "Monacoin Signed Message:\n",
-  bip32: {
-    public: 70617039, // 間違っている可能性がある※正しい値が不明
-    private: 70615956
-  },
-  pubKeyHash: 111, // m
-  scriptHash: 117, // p
-  wif: 239,
-  bech32: "tmona"
-};
-const pathBase = "m/49'/22'/0'";
-const pathBase_test = "m/49'/1'/0'";
-const GAP_LIMIT_RECEIVING = 10; // 未使用受取アドレスの余裕数
-const GAP_LIMIT_CHANGE = 3; // 未使用おつりアドレスの余裕数
-
-export interface AddressInfo {
-  address: string;
-  path: string;
-  isSpent: boolean;
-  isChange: boolean;
-  index: number;
-  balance: string;
-  unconfirmedBalance: string;
-  txids?: string[];
-}
-
-export interface TxInfo {
-  txid: string;
-  version: number;
-  lockTime: number;
-  vin: {
-    txid: string;
-    vout?: number; // vout === 0 のときに省略される
-    sequence: number;
-    n: number;
-    addresses: string[];
-    isAddress: boolean;
-    value: string;
-    hex: string;
-  }[];
-  vout: {
-    value: string;
-    n: number;
-    hex: string;
-    addresses: string[];
-    isAddress: boolean;
-  }[];
-  blockHash: string;
-  blockHeight: number;
-  confirmations: number;
-  blockTime: number;
-  value: string;
-  valueIn: string;
-  fees: string;
-  hex: string;
-}
-
-interface Utxo {
-  txid: string;
-  index: number;
-  amount: string;
-  script: string;
-  txHex: string;
-  path: string;
-  confirmations: number;
-}
+import getNetwork from "../functions/getNetwork";
+import getPathBase from "../functions/getPathBase";
+import AddressInfo from "../interfaces/addressInfo";
+import TxInfo from "../interfaces/txInfo";
+import Utxo from "../interfaces/utxo";
 
 /**
  * Monacoinのクラス
@@ -113,6 +36,8 @@ export default class Monacoin {
   public readonly addressType: string;
   public readonly minFeeRate: string;
   public readonly digit: number;
+  public readonly gapLimitReceiving: number;
+  public readonly gapLimitChange: number;
   private _seed: Buffer;
   private _node: BIP32Interface;
   private _chain: "main" | "test";
@@ -156,13 +81,15 @@ export default class Monacoin {
     this.balanceUnit = "WATANABE";
     this.addressType = "P2SH-P2WPKH";
     this.minFeeRate = "150"; // watanabe / byte
-    this._seed = bip39.mnemonicToSeed(mnemonic);
-    this._node = bip32.fromSeed(this._seed, MONACOIN); // Monacoinのパラメータを指定
     this._chain = chain;
     this._coin = "Monacoin";
     this.digit = 100000000;
-    this._network = chain === "main" ? MONACOIN : MONACOIN_TESTNET;
-    this._pathBase = chain === "main" ? pathBase : pathBase_test;
+    this.gapLimitReceiving = 10; // 未使用受取アドレスの余裕数
+    this.gapLimitChange = 3; // 未使用おつりアドレスの余裕数
+    this._network = getNetwork(this._coin, this._chain);
+    this._pathBase = getPathBase(this._coin, this._chain);
+    this._seed = bip39.mnemonicToSeed(mnemonic);
+    this._node = bip32.fromSeed(this._seed, this._network); // Monacoinのパラメータを指定
     this.unsignedTx = null;
   }
 
@@ -374,8 +301,8 @@ export default class Monacoin {
       receivingAddressNum: number;
       changeAddressNum: number;
     } = {
-      receivingAddressNum: GAP_LIMIT_RECEIVING,
-      changeAddressNum: GAP_LIMIT_CHANGE
+      receivingAddressNum: this.gapLimitReceiving,
+      changeAddressNum: this.gapLimitChange
     }
   ): Promise<void> {
     this.blockbook = await createBlockbook(this._chain, this._coin);
@@ -398,8 +325,8 @@ export default class Monacoin {
     }));
 
     let nextIndex = options.receivingAddressNum;
-    while (unspentSequence < GAP_LIMIT_RECEIVING) {
-      const length = Math.max(GAP_LIMIT_RECEIVING - unspentSequence, 0);
+    while (unspentSequence < this.gapLimitReceiving) {
+      const length = Math.max(this.gapLimitReceiving - unspentSequence, 0);
       ({ allAddressData, unspentSequence } = await this._getAddressData({
         allAddressData,
         isChange: 0,
@@ -419,8 +346,8 @@ export default class Monacoin {
       startSequence: 0
     }));
     nextIndex = options.changeAddressNum;
-    while (unspentSequence < GAP_LIMIT_CHANGE) {
-      const length = Math.max(GAP_LIMIT_CHANGE - unspentSequence, 0);
+    while (unspentSequence < this.gapLimitChange) {
+      const length = Math.max(this.gapLimitChange - unspentSequence, 0);
       ({ allAddressData, unspentSequence } = await this._getAddressData({
         allAddressData,
         isChange: 1,
@@ -620,10 +547,11 @@ export default class Monacoin {
 
   /**
    * 送金先のアドレスからアウトプットのタイプを取得するメソッド。
-   * "p2pkh", "p2sh", "p2wpkh", "p2wsh"のいずれかが得られる
+   * "p2pkh", "p2sh", "p2wpkh", "p2wsh"のいずれかが得られる。
+   * 識別できない場合はエラーをthrowする。モナコインアドレスを
    * @param toAddress 送金先のアドレス
    */
-  private _getOutputType(toAddress: string): string {
+  public getOutputType(toAddress: string): string {
     const outputTypes = ["p2pkh", "p2sh", "p2wpkh", "p2wsh"];
     let returnType: string;
     outputTypes.forEach(
@@ -653,7 +581,7 @@ export default class Monacoin {
     script: Buffer;
     value: number;
   } {
-    const type = this._getOutputType(toAddress);
+    const type = this.getOutputType(toAddress);
     const payment = bclib.payments[type]({
       address: toAddress,
       network: this._network
@@ -685,7 +613,7 @@ export default class Monacoin {
     let estimateFees = new BigNumber(0);
     const inputs = { P2PKH: 0, P2WPKH: 0, "P2SH-P2WPKH": 0 };
     const outputs = { P2SH: 0, P2PKH: 0, P2WPKH: 0, P2WSH: 0 };
-    const outputType = this._getOutputType(options.toAddress).toUpperCase();
+    const outputType = this.getOutputType(options.toAddress).toUpperCase();
     outputs[outputType]++;
     const changeType =
       this.addressType.slice(0, 4) === "P2SH" ? "P2SH" : this.addressType;

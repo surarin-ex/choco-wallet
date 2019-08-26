@@ -1,3 +1,9 @@
 import generateMnemonic from "./functions/generateMnemonic";
+import estimateTxBytes from "./functions/estimateTxBytes";
+import getOutputType from "./functions/getOutputType";
+import getPathBase from "./functions/getPathBase";
 import Monacoin from "./classes/monacoin";
-export { generateMnemonic, Monacoin };
+import AddressInfo from "./interfaces/addressInfo";
+import TxInfo from "./interfaces/txInfo";
+import Utxo from "./interfaces/utxo";
+export { generateMnemonic, estimateTxBytes, getOutputType, getPathBase, Monacoin, AddressInfo, TxInfo, Utxo };

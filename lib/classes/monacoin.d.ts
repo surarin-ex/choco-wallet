@@ -1,44 +1,6 @@
 import { Blockbook } from "../../src/classes/blockbook";
-export interface AddressInfo {
-    address: string;
-    path: string;
-    isSpent: boolean;
-    isChange: boolean;
-    index: number;
-    balance: string;
-    unconfirmedBalance: string;
-    txids?: string[];
-}
-export interface TxInfo {
-    txid: string;
-    version: number;
-    lockTime: number;
-    vin: {
-        txid: string;
-        vout?: number;
-        sequence: number;
-        n: number;
-        addresses: string[];
-        isAddress: boolean;
-        value: string;
-        hex: string;
-    }[];
-    vout: {
-        value: string;
-        n: number;
-        hex: string;
-        addresses: string[];
-        isAddress: boolean;
-    }[];
-    blockHash: string;
-    blockHeight: number;
-    confirmations: number;
-    blockTime: number;
-    value: string;
-    valueIn: string;
-    fees: string;
-    hex: string;
-}
+import AddressInfo from "../interfaces/addressInfo";
+import TxInfo from "../interfaces/txInfo";
 /**
  * Monacoinのクラス
  */
@@ -55,6 +17,8 @@ export default class Monacoin {
     readonly addressType: string;
     readonly minFeeRate: string;
     readonly digit: number;
+    readonly gapLimitReceiving: number;
+    readonly gapLimitChange: number;
     private _seed;
     private _node;
     private _chain;
@@ -174,10 +138,11 @@ export default class Monacoin {
     private _getInputData;
     /**
      * 送金先のアドレスからアウトプットのタイプを取得するメソッド。
-     * "p2pkh", "p2sh", "p2wpkh", "p2wsh"のいずれかが得られる
+     * "p2pkh", "p2sh", "p2wpkh", "p2wsh"のいずれかが得られる。
+     * 識別できない場合はエラーをthrowする。モナコインアドレスを
      * @param toAddress 送金先のアドレス
      */
-    private _getOutputType;
+    getOutputType(toAddress: string): string;
     /**
      * PSBTに追加するためのoutputデータを作成するメソッド
      * @param toAddress 送金先のアドレス
