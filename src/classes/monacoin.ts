@@ -643,7 +643,7 @@ export default class Monacoin {
   }): Promise<void> {
     const amount_big = new BigNumber(options.amount);
     if (
-      amount_big.lt(0) ||
+      amount_big.lte(0) ||
       !Number.isInteger(amount_big.toNumber()) ||
       amount_big.toString() === "NaN"
     ) {
