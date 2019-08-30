@@ -22,17 +22,15 @@ const getOutputType = (
 ): string => {
   const outputTypes = ["p2pkh", "p2sh", "p2wpkh", "p2wsh"];
   let returnType: string;
-  outputTypes.forEach(
-    (type): void => {
-      try {
-        bclib.payments[type]({ address: toAddress, network });
-        returnType = type;
-        return;
-      } catch (ignoredErr) {
-        // 何もしない
-      }
+  outputTypes.forEach((type): void => {
+    try {
+      bclib.payments[type]({ address: toAddress, network });
+      returnType = type;
+      return;
+    } catch (ignoredErr) {
+      // 何もしない
     }
-  );
+  });
   if (!returnType) throw new Error("アドレスに誤りがあります");
   return returnType;
 };

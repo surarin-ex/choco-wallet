@@ -2,6 +2,7 @@ import generateMnemonic from "./functions/generateMnemonic";
 import estimateTxBytes from "./functions/estimateTxBytes";
 import getOutputType from "./functions/getOutputType";
 import getPathBase from "./functions/getPathBase";
+import getNetwork from "./functions/getNetwork";
 import Monacoin from "./classes/monacoin";
 import AddressInfo from "./interfaces/addressInfo";
 import TxInfo from "./interfaces/txInfo";
@@ -12,6 +13,7 @@ export {
   estimateTxBytes,
   getOutputType,
   getPathBase,
+  getNetwork,
   Monacoin,
   AddressInfo,
   TxInfo,

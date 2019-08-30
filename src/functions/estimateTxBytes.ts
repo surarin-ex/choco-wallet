@@ -55,23 +55,19 @@ const estimateTxBytes = (
   };
 
   // inputのサイズ計算
-  Object.keys(inputs).forEach(
-    (key): void => {
-      checkUInt53(inputs[key]);
-      totalWeight += types.inputs[key] * inputs[key];
-      inputCount += inputs[key];
-      if (key.indexOf("W") >= 0) hasWitness = true;
-    }
-  );
+  Object.keys(inputs).forEach((key): void => {
+    checkUInt53(inputs[key]);
+    totalWeight += types.inputs[key] * inputs[key];
+    inputCount += inputs[key];
+    if (key.indexOf("W") >= 0) hasWitness = true;
+  });
 
   // outputのサイズ計算
-  Object.keys(outputs).forEach(
-    (key: string): void => {
-      checkUInt53(outputs[key]);
-      totalWeight += types.outputs[key] * outputs[key];
-      outputCount += outputs[key];
-    }
-  );
+  Object.keys(outputs).forEach((key: string): void => {
+    checkUInt53(outputs[key]);
+    totalWeight += types.outputs[key] * outputs[key];
+    outputCount += outputs[key];
+  });
   if (hasWitness) totalWeight += 2; // markerとflag
   totalWeight += 8 * 4; // version(4byte)とlocktime(4byte)が合計で8byte
   totalWeight += varIntLength(inputCount) * 4; // inputの個数を表す可変長整数の重み

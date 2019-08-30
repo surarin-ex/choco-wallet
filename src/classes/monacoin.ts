@@ -798,7 +798,13 @@ export default class Monacoin {
     const tx = this.signedTx.psbt.extractTransaction();
     const txHex = tx.toHex();
     const outs = tx.outs.map(
-      (out): { address: string; amount: string; amount_mona: string } => {
+      (
+        out
+      ): {
+        address: string;
+        amount: string;
+        amount_mona: string;
+      } => {
         return {
           address: bclib.address.fromOutputScript(out.script, this._network),
           amount: "value" in out ? out.value.toString() : "unknown",
