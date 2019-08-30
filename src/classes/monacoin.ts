@@ -366,7 +366,7 @@ export default class Monacoin {
         addressInfos.push({
           address: info.address,
           path: allAddressData.allPaths[index],
-          isSpent: info.txs > 0 ? true : false,
+          isSpent: info.totalReceived !== "0" ? true : false,
           isChange:
             allAddressData.allPaths[index].split("/")[4] === "1" ? true : false,
           index: parseInt(allAddressData.allPaths[index].split("/")[5]),
