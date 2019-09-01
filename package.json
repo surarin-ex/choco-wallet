@@ -10,7 +10,7 @@
   "scripts": {
     "build": "yarn run clean && tsc --declaration",
     "watch": "yarn run clean && tsc --watch --declaration",
-    "test": "mocha  --timeout 10000 './lib/tests/**/*.js'",
+    "test": "mocha  --timeout 20000 './lib/tests/**/*.js'",
     "clean": "rm -rf ./lib",
     "lint": "yarn eslint src/**/*.ts --fix"
   },

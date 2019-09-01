@@ -6,14 +6,11 @@ import estimateTxBytes from "../../../functions/estimateTxBytes";
 describe("Monacoin のユニットテスト", (): void => {
   describe("getPath() のユニットテスト", (): void => {
     let monacoin: Monacoin;
-    before(
-      "インスタンス作成",
-      (): void => {
-        monacoin = new Monacoin(
-          "むける　とかい　はんこ　ぐあい　きけんせい　ほそい　さゆう　そぼく　たいてい　さくら　とおか　はろうぃん"
-        );
-      }
-    );
+    before("インスタンス作成", (): void => {
+      monacoin = new Monacoin(
+        "むける　とかい　はんこ　ぐあい　きけんせい　ほそい　さゆう　そぼく　たいてい　さくら　とおか　はろうぃん"
+      );
+    });
     it("おつりフラグ0、アドレスインデックス0で適切な値を取得できる", (): void => {
       const path = monacoin.getPath(0, 0);
       assert.deepEqual(path, "m/49'/22'/0'/0/0");
@@ -25,14 +22,11 @@ describe("Monacoin のユニットテスト", (): void => {
   });
   describe("getPaths() のユニットテスト", (): void => {
     let monacoin: Monacoin;
-    before(
-      "インスタンス作成",
-      (): void => {
-        monacoin = new Monacoin(
-          "むける　とかい　はんこ　ぐあい　きけんせい　ほそい　さゆう　そぼく　たいてい　さくら　とおか　はろうぃん"
-        );
-      }
-    );
+    before("インスタンス作成", (): void => {
+      monacoin = new Monacoin(
+        "むける　とかい　はんこ　ぐあい　きけんせい　ほそい　さゆう　そぼく　たいてい　さくら　とおか　はろうぃん"
+      );
+    });
     it("おつりフラグ0、アドレスインデックス0、長さ3で適切な値を取得できる", (): void => {
       const paths = monacoin.getPaths(0, 0, 3);
       assert.deepEqual(paths[0], "m/49'/22'/0'/0/0");
@@ -48,14 +42,11 @@ describe("Monacoin のユニットテスト", (): void => {
   });
   describe("getAddress() のユニットテスト", (): void => {
     let monacoin: Monacoin;
-    before(
-      "インスタンス作成",
-      (): void => {
-        monacoin = new Monacoin(
-          "むける　とかい　はんこ　ぐあい　きけんせい　ほそい　さゆう　そぼく　たいてい　さくら　とおか　はろうぃん"
-        );
-      }
-    );
+    before("インスタンス作成", (): void => {
+      monacoin = new Monacoin(
+        "むける　とかい　はんこ　ぐあい　きけんせい　ほそい　さゆう　そぼく　たいてい　さくら　とおか　はろうぃん"
+      );
+    });
     it("正しいアドレスが生成される", (): void => {
       const path1 = monacoin.getPath(0, 0);
       const address1 = monacoin.getAddress(path1);
@@ -78,14 +69,11 @@ describe("Monacoin のユニットテスト", (): void => {
   });
   describe("getAddresses() のユニットテスト", (): void => {
     let monacoin: Monacoin;
-    before(
-      "インスタンス作成",
-      (): void => {
-        monacoin = new Monacoin(
-          "むける　とかい　はんこ　ぐあい　きけんせい　ほそい　さゆう　そぼく　たいてい　さくら　とおか　はろうぃん"
-        );
-      }
-    );
+    before("インスタンス作成", (): void => {
+      monacoin = new Monacoin(
+        "むける　とかい　はんこ　ぐあい　きけんせい　ほそい　さゆう　そぼく　たいてい　さくら　とおか　はろうぃん"
+      );
+    });
     it("複数の正しいアドレスが生成される", (): void => {
       const paths = monacoin.getPaths(0, 0, 2);
       const addresses = monacoin.getAddresses(paths);
@@ -105,25 +93,20 @@ describe("Monacoin のユニットテスト", (): void => {
   });
   describe("updateAddressInfos() のユニットテスト", (): void => {
     let monacoin: Monacoin;
-    before(
-      "インスタンス作成",
-      (): void => {
-        monacoin = new Monacoin(
-          "むける　とかい　はんこ　ぐあい　きけんせい　ほそい　さゆう　そぼく　たいてい　さくら　とおか　はろうぃん",
-          "test"
-        );
-      }
-    );
+    before("インスタンス作成", (): void => {
+      monacoin = new Monacoin(
+        "むける　とかい　はんこ　ぐあい　きけんせい　ほそい　さゆう　そぼく　たいてい　さくら　とおか　はろうぃん",
+        "test"
+      );
+    });
     it("アドレス情報が更新される", async (): Promise<void> => {
       await monacoin.updateAddressInfos({
         receivingAddressNum: 14,
         changeAddressNum: 6
       });
-      const initialAddress = monacoin.addressInfos.find(
-        (info): boolean => {
-          return info.index === 0 && info.isChange === false;
-        }
-      );
+      const initialAddress = monacoin.addressInfos.find((info): boolean => {
+        return info.index === 0 && info.isChange === false;
+      });
       assert.deepEqual(
         initialAddress.address,
         "p6jm4kuLCWozhhD9BP6t7Y5zEkXHVcYV7b"
@@ -132,50 +115,39 @@ describe("Monacoin のユニットテスト", (): void => {
       assert.deepEqual(initialAddress.path, "m/49'/1'/0'/0/0");
       assert.isNotEmpty(initialAddress.txids);
       assert.isTrue(
-        monacoin.addressInfos.filter(
-          (info): boolean => {
-            return !info.isChange;
-          }
-        ).length >= 14
+        monacoin.addressInfos.filter((info): boolean => {
+          return !info.isChange;
+        }).length >= 14
       );
       assert.isTrue(
-        monacoin.addressInfos.filter(
-          (info): boolean => {
-            return info.isChange;
-          }
-        ).length >= 6
+        monacoin.addressInfos.filter((info): boolean => {
+          return info.isChange;
+        }).length >= 6
       );
       assert.deepEqual(monacoin.balance, "499950200");
       assert.deepEqual(monacoin.balanceReadable, "4.999502");
       assert.deepEqual(
         monacoin.receiveAddress,
-        monacoin.addressInfos.find(
-          (info): boolean => {
-            return !info.isChange && !info.isSpent;
-          }
-        ).address
+        monacoin.addressInfos.find((info): boolean => {
+          return !info.isChange && !info.isSpent;
+        }).address
       );
       assert.deepEqual(
         monacoin.changeAddress,
-        monacoin.addressInfos.find(
-          (info): boolean => {
-            return info.isChange && !info.isSpent;
-          }
-        ).address
+        monacoin.addressInfos.find((info): boolean => {
+          return info.isChange && !info.isSpent;
+        }).address
       );
     });
   });
   describe("updateTxInfos() のユニットテスト", (): void => {
     let monacoin: Monacoin;
-    before(
-      "インスタンス作成",
-      (): void => {
-        monacoin = new Monacoin(
-          "むける　とかい　はんこ　ぐあい　きけんせい　ほそい　さゆう　そぼく　たいてい　さくら　とおか　はろうぃん",
-          "test"
-        );
-      }
-    );
+    before("インスタンス作成", (): void => {
+      monacoin = new Monacoin(
+        "むける　とかい　はんこ　ぐあい　きけんせい　ほそい　さゆう　そぼく　たいてい　さくら　とおか　はろうぃん",
+        "test"
+      );
+    });
     it("トランザクション情報が更新される", async (): Promise<void> => {
       await monacoin.updateTxInfos();
       assert.deepEqual(monacoin.txInfos.length, 4);
@@ -183,15 +155,12 @@ describe("Monacoin のユニットテスト", (): void => {
   });
   describe("estimateFeeRate() のユニットテスト", (): void => {
     let monacoin: Monacoin;
-    before(
-      "インスタンス作成",
-      (): void => {
-        monacoin = new Monacoin(
-          "むける　とかい　はんこ　ぐあい　きけんせい　ほそい　さゆう　そぼく　たいてい　さくら　とおか　はろうぃん",
-          "main"
-        );
-      }
-    );
+    before("インスタンス作成", (): void => {
+      monacoin = new Monacoin(
+        "むける　とかい　はんこ　ぐあい　きけんせい　ほそい　さゆう　そぼく　たいてい　さくら　とおか　はろうぃん",
+        "main"
+      );
+    });
     it("150watanabe/byte以上の手数料が取得される", async (): Promise<void> => {
       const feeRate = await monacoin.estimateFeeRate("min");
       assert.isTrue(new BigNumber(feeRate).gte(150));
@@ -217,17 +186,14 @@ describe("Monacoin のユニットテスト", (): void => {
       );
     });
   });
-  describe("createUnsignedTx() のユニットテスト", (): void => {
+  describe("updateUnsignedTx() のユニットテスト", (): void => {
     let monacoin: Monacoin;
-    before(
-      "インスタンス作成",
-      (): void => {
-        monacoin = new Monacoin(
-          "なめらか　からい　ひやけ　げきか　なにごと　かわら　こもち　おおや　おもう　こうかん　れいぎ　とそう",
-          "test"
-        );
-      }
-    );
+    before("インスタンス作成", (): void => {
+      monacoin = new Monacoin(
+        "なめらか　からい　ひやけ　げきか　なにごと　かわら　こもち　おおや　おもう　こうかん　れいぎ　とそう",
+        "test"
+      );
+    });
     it("unsignedTxに含まれるデータの整合性が取れている", async (): Promise<
       void
     > => {
@@ -393,11 +359,9 @@ describe("Monacoin のユニットテスト", (): void => {
         });
       }
     );
-    afterEach(
-      (): void => {
-        monacoin.deleteSignedTx();
-      }
-    );
+    afterEach((): void => {
+      monacoin.deleteSignedTx();
+    });
     it("署名後のトランザクションの情報が取得できる", (): void => {
       monacoin.signTx();
       const summary = monacoin.getSignedTxSummary();

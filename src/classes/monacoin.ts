@@ -155,11 +155,9 @@ export default class Monacoin {
    * @param paths pathの配列
    */
   public getAddresses(paths: string[]): string[] {
-    const addresses = paths.map(
-      (path: string): string => {
-        return this.getAddress(path);
-      }
-    );
+    const addresses = paths.map((path: string): string => {
+      return this.getAddress(path);
+    });
     return addresses;
   }
 
@@ -173,12 +171,10 @@ export default class Monacoin {
     startSequence: number
   ): number {
     let unspentSequence = startSequence;
-    addressInfos.forEach(
-      (info): void => {
-        unspentSequence++;
-        if (info.txs > 0) unspentSequence = 0;
-      }
-    );
+    addressInfos.forEach((info): void => {
+      unspentSequence++;
+      if (info.txs > 0) unspentSequence = 0;
+    });
     return unspentSequence;
   }
 
@@ -230,16 +226,12 @@ export default class Monacoin {
         addressInfos,
         options.startSequence
       );
-      paths.forEach(
-        (path: string): void => {
-          allAddressData.allPaths.push(path);
-        }
-      );
-      addressInfos.forEach(
-        (info: BlockbookAddress): void => {
-          allAddressData.allBlockbookAddresses.push(info);
-        }
-      );
+      paths.forEach((path: string): void => {
+        allAddressData.allPaths.push(path);
+      });
+      addressInfos.forEach((info: BlockbookAddress): void => {
+        allAddressData.allBlockbookAddresses.push(info);
+      });
       return { allAddressData, unspentSequence };
     } catch (err) {
       throw err;
@@ -268,11 +260,9 @@ export default class Monacoin {
    * ※addressInfosプロパティがindexの小さい順に並んでいることを前提としている
    */
   private _setReceiveAddress(): void {
-    const receiveAddressInfo = this.addressInfos.find(
-      (info): boolean => {
-        return !info.isChange && !info.isSpent;
-      }
-    );
+    const receiveAddressInfo = this.addressInfos.find((info): boolean => {
+      return !info.isChange && !info.isSpent;
+    });
     this.receiveAddress = receiveAddressInfo.address;
   }
 
@@ -281,11 +271,9 @@ export default class Monacoin {
    * ※addressInfosプロパティがindexの小さい順に並んでいることを前提としている
    */
   private _setChangeAddress(): void {
-    const changeAddressInfo = this.addressInfos.find(
-      (info): boolean => {
-        return info.isChange && !info.isSpent;
-      }
-    );
+    const changeAddressInfo = this.addressInfos.find((info): boolean => {
+      return info.isChange && !info.isSpent;
+    });
     this.changeAddress = changeAddressInfo.address;
   }
 
@@ -361,21 +349,19 @@ export default class Monacoin {
 
     // アドレス情報の整理
     const addressInfos: AddressInfo[] = [];
-    allAddressData.allBlockbookAddresses.forEach(
-      (info, index): void => {
-        addressInfos.push({
-          address: info.address,
-          path: allAddressData.allPaths[index],
-          isSpent: info.totalReceived !== "0" ? true : false,
-          isChange:
-            allAddressData.allPaths[index].split("/")[4] === "1" ? true : false,
-          index: parseInt(allAddressData.allPaths[index].split("/")[5]),
-          balance: info.balance,
-          unconfirmedBalance: info.unconfirmedBalance,
-          txids: info.txids
-        });
-      }
-    );
+    allAddressData.allBlockbookAddresses.forEach((info, index): void => {
+      addressInfos.push({
+        address: info.address,
+        path: allAddressData.allPaths[index],
+        isSpent: info.totalReceived !== "0" ? true : false,
+        isChange:
+          allAddressData.allPaths[index].split("/")[4] === "1" ? true : false,
+        index: parseInt(allAddressData.allPaths[index].split("/")[5]),
+        balance: info.balance,
+        unconfirmedBalance: info.unconfirmedBalance,
+        txids: info.txids
+      });
+    });
     this.addressInfos = addressInfos;
     this._updateBalance();
     this._setReceiveAddress();
@@ -391,18 +377,14 @@ export default class Monacoin {
     }
     // 重複を除去したtxidの配列を取得
     let dupTxids = [];
-    this.addressInfos.forEach(
-      (info): void => {
-        if (info.txids) {
-          dupTxids = dupTxids.concat(info.txids);
-        }
+    this.addressInfos.forEach((info): void => {
+      if (info.txids) {
+        dupTxids = dupTxids.concat(info.txids);
       }
-    );
-    const txids = dupTxids.filter(
-      (address, index, addresses): boolean => {
-        return addresses.indexOf(address) === index;
-      }
-    );
+    });
+    const txids = dupTxids.filter((address, index, addresses): boolean => {
+      return addresses.indexOf(address) === index;
+    });
     this.txInfos = await this.blockbook.getBlockbookTxs(txids);
   }
 
@@ -450,48 +432,36 @@ export default class Monacoin {
    */
   private _getUtxos(): Utxo[] {
     const spentOutputs: string[] = [];
-    this.txInfos.forEach(
-      (txInfo): void => {
-        txInfo.vin.forEach(
-          (input): void => {
-            spentOutputs.push(`${input.txid}:${input.vout || 0}`);
-          }
-        );
-      }
-    );
+    this.txInfos.forEach((txInfo): void => {
+      txInfo.vin.forEach((input): void => {
+        spentOutputs.push(`${input.txid}:${input.vout || 0}`);
+      });
+    });
     const utxos: Utxo[] = []; // key: "txid:vout", value: value
-    this.txInfos.sort(
-      (a, b): number => {
-        return b.confirmations - a.confirmations;
-      }
-    );
-    this.txInfos.forEach(
-      (txInfo): void => {
-        txInfo.vout.forEach(
-          (output): void => {
-            if (spentOutputs.indexOf(`${txInfo.txid}:${output.n}`) < 0) {
-              const info = this.addressInfos.find(
-                (info): boolean => {
-                  return info.address === output.addresses[0];
-                }
-              );
-              if (info) {
-                const tx = bclib.Transaction.fromHex(txInfo.hex);
-                utxos.push({
-                  txid: txInfo.txid,
-                  index: output.n,
-                  amount: output.value,
-                  script: tx.outs[output.n].script.toString("hex"),
-                  txHex: txInfo.hex,
-                  path: info.path,
-                  confirmations: txInfo.confirmations
-                });
-              }
-            }
+    this.txInfos.sort((a, b): number => {
+      return b.confirmations - a.confirmations;
+    });
+    this.txInfos.forEach((txInfo): void => {
+      txInfo.vout.forEach((output): void => {
+        if (spentOutputs.indexOf(`${txInfo.txid}:${output.n}`) < 0) {
+          const info = this.addressInfos.find((info): boolean => {
+            return info.address === output.addresses[0];
+          });
+          if (info) {
+            const tx = bclib.Transaction.fromHex(txInfo.hex);
+            utxos.push({
+              txid: txInfo.txid,
+              index: output.n,
+              amount: output.value,
+              script: tx.outs[output.n].script.toString("hex"),
+              txHex: txInfo.hex,
+              path: info.path,
+              confirmations: txInfo.confirmations
+            });
           }
-        );
-      }
-    );
+        }
+      });
+    });
     return utxos;
   }
 
@@ -598,31 +568,29 @@ export default class Monacoin {
     const changeType =
       this.addressType.slice(0, 4) === "P2SH" ? "P2SH" : this.addressType;
     let hasChange = false;
-    options.utxos.forEach(
-      (utxo): void => {
-        utxos.push(utxo);
-        sumInput = sumInput.plus(utxo.amount);
-        inputs[this.addressType]++;
-        // おつりアドレスなしでfeeを計算
-        estimateFees = new BigNumber(estimateTxBytes(inputs, outputs)).times(
-          options.feeRate
-        );
-        if (sumInput.eq(amount.plus(estimateFees))) {
-          hasChange = false;
-          return;
-        }
-        // おつりアドレスを追加してfeeを再計算
-        outputs[changeType]++; // おつりアドレスを追加
-        estimateFees = new BigNumber(estimateTxBytes(inputs, outputs)).times(
-          options.feeRate
-        );
-        if (sumInput.gte(amount.plus(estimateFees))) {
-          hasChange = true;
-          return;
-        }
-        outputs[changeType]--; // おつりアドレスを除外
+    for (let utxo of options.utxos) {
+      utxos.push(utxo);
+      sumInput = sumInput.plus(utxo.amount);
+      inputs[this.addressType]++;
+      // おつりアドレスなしでfeeを計算
+      estimateFees = new BigNumber(estimateTxBytes(inputs, outputs)).times(
+        options.feeRate
+      );
+      if (sumInput.eq(amount.plus(estimateFees))) {
+        hasChange = false;
+        break;
       }
-    );
+      // おつりアドレスを追加してfeeを再計算
+      outputs[changeType]++; // おつりアドレスを追加
+      estimateFees = new BigNumber(estimateTxBytes(inputs, outputs)).times(
+        options.feeRate
+      );
+      if (sumInput.gte(amount.plus(estimateFees))) {
+        hasChange = true;
+        break;
+      }
+      outputs[changeType]--; // おつりアドレスを除外
+    }
     if (sumInput.lt(amount.plus(estimateFees))) throw new Error("残高不足です");
     return {
       utxos,
@@ -668,13 +636,11 @@ export default class Monacoin {
     psbt.setVersion(2);
     psbt.setLocktime(0);
     const inputDataList: (PsbtInput & TransactionInput)[] = [];
-    utxos.forEach(
-      (utxo): void => {
-        const payment = this._getPaymentFromPath(utxo.path);
-        const inputData = this._getInputData(utxo, payment, true, "p2sh");
-        inputDataList.push(inputData);
-      }
-    );
+    utxos.forEach((utxo): void => {
+      const payment = this._getPaymentFromPath(utxo.path);
+      const inputData = this._getInputData(utxo, payment, true, "p2sh");
+      inputDataList.push(inputData);
+    });
     psbt.addInputs(inputDataList);
     const outputDataList: (PsbtOutput & TransactionOutput)[] = [];
     const outputData1 = this._getOutputData(
@@ -743,24 +709,15 @@ export default class Monacoin {
   public signTx(): void {
     try {
       // 署名
-      this.unsignedTx.utxos.forEach(
-        (utxo, index): void => {
-          this.unsignedTx.psbt.signInput(
-            index,
-            this._node.derivePath(utxo.path)
-          );
-        }
-      );
+      this.unsignedTx.utxos.forEach((utxo, index): void => {
+        this.unsignedTx.psbt.signInput(index, this._node.derivePath(utxo.path));
+      });
       // 署名の検証
-      this.unsignedTx.utxos.forEach(
-        (utxo, index): void => {
-          const result = this.unsignedTx.psbt.validateSignaturesOfInput(index);
-          if (!result)
-            throw new Error(
-              "トランザクションの署名の検証でエラーが発生しました"
-            );
-        }
-      );
+      this.unsignedTx.utxos.forEach((utxo, index): void => {
+        const result = this.unsignedTx.psbt.validateSignaturesOfInput(index);
+        if (!result)
+          throw new Error("トランザクションの署名の検証でエラーが発生しました");
+      });
       this.unsignedTx.psbt.finalizeAllInputs();
       this.signedTx = this.unsignedTx;
       this.unsignedTx = null;
@@ -797,35 +754,27 @@ export default class Monacoin {
   } {
     const tx = this.signedTx.psbt.extractTransaction();
     const txHex = tx.toHex();
-    const outs = tx.outs.map(
-      (
-        out
-      ): {
-        address: string;
-        amount: string;
-        amount_mona: string;
-      } => {
-        return {
-          address: bclib.address.fromOutputScript(out.script, this._network),
-          amount: "value" in out ? out.value.toString() : "unknown",
-          amount_mona:
-            "value" in out
-              ? new BigNumber(out.value).dividedBy(this.digit).toString()
-              : "unknown"
-        };
-      }
-    );
-    const outsExceptChange = outs.filter(
-      (out): boolean => {
-        return out.address !== this.changeAddress;
-      }
-    );
+    const outs = tx.outs.map((out): {
+      address: string;
+      amount: string;
+      amount_mona: string;
+    } => {
+      return {
+        address: bclib.address.fromOutputScript(out.script, this._network),
+        amount: "value" in out ? out.value.toString() : "unknown",
+        amount_mona:
+          "value" in out
+            ? new BigNumber(out.value).dividedBy(this.digit).toString()
+            : "unknown"
+      };
+    });
+    const outsExceptChange = outs.filter((out): boolean => {
+      return out.address !== this.changeAddress;
+    });
     const change =
-      outs.find(
-        (out): boolean => {
-          return out.address === this.changeAddress;
-        }
-      ) || null;
+      outs.find((out): boolean => {
+        return out.address === this.changeAddress;
+      }) || null;
     const amount = outsExceptChange.reduce((sum, out): string => {
       return new BigNumber(sum).plus(new BigNumber(out.amount)).toString();
     }, "0");
