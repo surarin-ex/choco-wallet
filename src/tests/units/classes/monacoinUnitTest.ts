@@ -2,6 +2,8 @@ import Monacoin from "../../../classes/monacoin";
 import { assert } from "chai";
 import BigNumber from "bignumber.js";
 import estimateTxBytes from "../../../functions/estimateTxBytes";
+import Utxo from "../../../interfaces/utxo";
+import * as bclib from "bitcoinjs-lib";
 
 describe("Monacoin のユニットテスト", (): void => {
   describe("getPath() のユニットテスト", (): void => {
@@ -235,6 +237,21 @@ describe("Monacoin のユニットテスト", (): void => {
       );
       assert.deepEqual(feeRate, 150);
     });
+    it("amountに最小アウトプットよりも小さい値を指定するとエラーがthrowされる", async (): Promise<
+      void
+    > => {
+      try {
+        await monacoin.updateUnsignedTx({
+          toAddress: "pQ1Lzx4hm7SrnfQ2LWihzB1JLosvC166Hs",
+          amount: new BigNumber(monacoin.minOutValue).minus(1).toString(),
+          feeRate: 150
+        });
+        throw new Error("エラーが発生しませんでした");
+      } catch (err) {
+        assert.deepEqual(err.message, "送金額が不適切です");
+      }
+    });
+
     it("amountにマイナスを指定するとエラーがthrowされる", async (): Promise<
       void
     > => {
@@ -342,6 +359,71 @@ describe("Monacoin のユニットテスト", (): void => {
       const signedSummary = monacoin.getSignedTxSummary();
       assert.isNull(signedSummary.change);
     });
+    it("全UTXOの合計額が送金額と手数料を上回るが、おつりを作れない場合、おつりなしで手数料多めのトランザクションが作成される", async (): Promise<
+      void
+    > => {
+      const getUtxos = (monacoin: Monacoin): Utxo[] => {
+        const spentOutputs: string[] = [];
+        monacoin.txInfos.forEach((txInfo): void => {
+          txInfo.vin.forEach((input): void => {
+            spentOutputs.push(`${input.txid}:${input.vout || 0}`);
+          });
+        });
+        const utxos: Utxo[] = []; // key: "txid:vout", value: value
+        monacoin.txInfos.sort((a, b): number => {
+          return b.confirmations - a.confirmations;
+        });
+        monacoin.txInfos.forEach((txInfo): void => {
+          txInfo.vout.forEach((output): void => {
+            if (spentOutputs.indexOf(`${txInfo.txid}:${output.n}`) < 0) {
+              const info = monacoin.addressInfos.find((info): boolean => {
+                return info.address === output.addresses[0];
+              });
+              if (info) {
+                const tx = bclib.Transaction.fromHex(txInfo.hex);
+                utxos.push({
+                  txid: txInfo.txid,
+                  index: output.n,
+                  amount: output.value,
+                  script: tx.outs[output.n].script.toString("hex"),
+                  txHex: txInfo.hex,
+                  path: info.path,
+                  confirmations: txInfo.confirmations
+                });
+              }
+            }
+          });
+        });
+        return utxos;
+      };
+      await monacoin.updateAddressInfos();
+      await monacoin.updateTxInfos();
+      const utxos = getUtxos(monacoin);
+      const sumInput = utxos.reduce((sum, elm): string => {
+        return new BigNumber(sum).plus(elm.amount).toString();
+      }, "0");
+      const estimateFees =
+        estimateTxBytes({ "P2SH-P2WPKH": utxos.length }, { P2SH: 1 }) * 150;
+      await monacoin.updateUnsignedTx({
+        toAddress: "pQ1Lzx4hm7SrnfQ2LWihzB1JLosvC166Hs",
+        amount: new BigNumber(sumInput)
+          .minus(estimateFees)
+          .minus(monacoin.minOutValue)
+          .plus(1)
+          .toString(),
+        feeRate: 150
+      });
+      monacoin.signTx();
+      const signedSummary = monacoin.getSignedTxSummary();
+      assert.isNull(signedSummary.change);
+      assert.deepEqual(
+        signedSummary.fees,
+        new BigNumber(estimateFees)
+          .plus(monacoin.minOutValue)
+          .minus(1)
+          .toString()
+      );
+    });
   });
   describe("signTx() のユニットテスト", (): void => {
     let monacoin: Monacoin;
@@ -405,6 +487,19 @@ describe("Monacoin のユニットテスト", (): void => {
     it("トランザクションを送信するとtxidが返される", async (): Promise<
       void
     > => {
+      const summary = monacoin.getSignedTxSummary();
+      const txid = await monacoin.broadcastTx();
+      assert.deepEqual(txid, summary.txid);
+    });
+    it("最小アウトプットの金額のトランザクションを送信するとtxidが返される", async (): Promise<
+      void
+    > => {
+      await monacoin.updateUnsignedTx({
+        toAddress: "pQ1Lzx4hm7SrnfQ2LWihzB1JLosvC166Hs",
+        amount: monacoin.minOutValue,
+        feeRate: 150
+      });
+      await monacoin.signTx();
       const summary = monacoin.getSignedTxSummary();
       const txid = await monacoin.broadcastTx();
       assert.deepEqual(txid, summary.txid);

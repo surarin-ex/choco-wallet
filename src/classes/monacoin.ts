@@ -36,6 +36,7 @@ export default class Monacoin {
   public readonly balanceUnit: string;
   public readonly addressType: string;
   public readonly minFeeRate: number;
+  public readonly minOutValue: string;
   public readonly digit: number;
   public readonly gapLimitReceiving: number;
   public readonly gapLimitChange: number;
@@ -82,6 +83,7 @@ export default class Monacoin {
     this.balanceUnit = "WATANABE";
     this.addressType = "P2SH-P2WPKH";
     this.minFeeRate = 150; // watanabe / byte
+    this.minOutValue = "100"; // watanabe
     this._chain = chain;
     this._coin = "Monacoin";
     this.digit = 100000000;
@@ -539,6 +541,11 @@ export default class Monacoin {
     };
   }
 
+  private _computeFees(byteCounts: number, feeRate: number): string {
+    const estimateFees = new BigNumber(byteCounts).times(feeRate).toString();
+    return estimateFees;
+  }
+
   /**
    * トランザクションの生成に必要なUTXOを選択するとともに、手数料を推定するメソッド
    * @param options 引数オブジェクト
@@ -557,7 +564,7 @@ export default class Monacoin {
     const amount = new BigNumber(options.amount);
     const utxos: Utxo[] = [];
     let sumInput = new BigNumber(0);
-    let estimateFees = new BigNumber(0);
+    let estimateFees = "0";
     const inputs = { P2PKH: 0, P2WPKH: 0, "P2SH-P2WPKH": 0 };
     const outputs = { P2SH: 0, P2PKH: 0, P2WPKH: 0, P2WSH: 0 };
     const outputType = getOutputType(
@@ -567,34 +574,53 @@ export default class Monacoin {
     outputs[outputType]++;
     const changeType =
       this.addressType.slice(0, 4) === "P2SH" ? "P2SH" : this.addressType;
-    let hasChange = false;
-    for (let utxo of options.utxos) {
+    let hasChange = true;
+    for (const utxo of options.utxos) {
       utxos.push(utxo);
       sumInput = sumInput.plus(utxo.amount);
       inputs[this.addressType]++;
       // おつりアドレスなしでfeeを計算
-      estimateFees = new BigNumber(estimateTxBytes(inputs, outputs)).times(
+      estimateFees = this._computeFees(
+        estimateTxBytes(inputs, outputs),
         options.feeRate
       );
       if (sumInput.eq(amount.plus(estimateFees))) {
         hasChange = false;
         break;
       }
+      // 十分なインプットがあるにも関わらず、おつりが作れない場合は、僅かな手数料を犠牲にしておつりをなくすことで送金可能にする。※インプットを追加すると余計に手数料がかかる
+      if (
+        sumInput.gt(amount.plus(estimateFees)) &&
+        sumInput.lt(amount.plus(estimateFees).plus(this.minOutValue))
+      ) {
+        estimateFees = new BigNumber(estimateFees)
+          .plus(sumInput.minus(amount.plus(estimateFees)))
+          .toString();
+        hasChange = false;
+        break;
+      }
       // おつりアドレスを追加してfeeを再計算
       outputs[changeType]++; // おつりアドレスを追加
-      estimateFees = new BigNumber(estimateTxBytes(inputs, outputs)).times(
+      estimateFees = this._computeFees(
+        estimateTxBytes(inputs, outputs),
         options.feeRate
       );
-      if (sumInput.gte(amount.plus(estimateFees))) {
+      if (sumInput.gte(amount.plus(estimateFees).plus(this.minOutValue))) {
         hasChange = true;
         break;
       }
+
       outputs[changeType]--; // おつりアドレスを除外
     }
-    if (sumInput.lt(amount.plus(estimateFees))) throw new Error("残高不足です");
+    if (
+      hasChange &&
+      sumInput.lt(amount.plus(estimateFees).plus(this.minOutValue))
+    ) {
+      throw new Error("残高不足です");
+    }
     return {
       utxos,
-      estimateFees: estimateFees.toString(),
+      estimateFees,
       sumInput: sumInput.toString(),
       hasChange
     };
@@ -611,7 +637,7 @@ export default class Monacoin {
   }): Promise<void> {
     const amount_big = new BigNumber(options.amount);
     if (
-      amount_big.lte(0) ||
+      amount_big.lt(this.minOutValue) ||
       !Number.isInteger(amount_big.toNumber()) ||
       amount_big.toString() === "NaN"
     ) {

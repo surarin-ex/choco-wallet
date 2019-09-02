@@ -16,6 +16,7 @@ export default class Monacoin {
     readonly balanceUnit: string;
     readonly addressType: string;
     readonly minFeeRate: number;
+    readonly minOutValue: string;
     readonly digit: number;
     readonly gapLimitReceiving: number;
     readonly gapLimitChange: number;
@@ -142,6 +143,7 @@ export default class Monacoin {
      * @param amount 金額 watanabe単位
      */
     private _getOutputData;
+    private _computeFees;
     /**
      * トランザクションの生成に必要なUTXOを選択するとともに、手数料を推定するメソッド
      * @param options 引数オブジェクト
