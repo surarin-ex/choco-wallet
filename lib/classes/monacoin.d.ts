@@ -143,6 +143,11 @@ export default class Monacoin {
      * @param amount 金額 watanabe単位
      */
     private _getOutputData;
+    /**
+     * 手数料を計算する
+     * @param byteCounts バイト数 vsize
+     * @param feeRate 手数料率 watanabe / byte
+     */
     private _computeFees;
     /**
      * トランザクションの生成に必要なUTXOを選択するとともに、手数料を推定するメソッド

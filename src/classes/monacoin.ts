@@ -20,6 +20,8 @@ import getOutputType from "../functions/getOutputType";
 import AddressInfo from "../interfaces/addressInfo";
 import TxInfo from "../interfaces/txInfo";
 import Utxo from "../interfaces/utxo";
+import singleRandomDraw from "../functions/singleRandomDraw";
+import getUtxosValue from "../functions/getUtxosValue";
 
 /**
  * Monacoinのクラス
@@ -83,7 +85,16 @@ export default class Monacoin {
     this.balanceUnit = "WATANABE";
     this.addressType = "P2SH-P2WPKH";
     this.minFeeRate = 150; // watanabe / byte
-    this.minOutValue = "100"; // watanabe
+    const inputs = {};
+    inputs[this.addressType] = 1;
+    this.minOutValue = (
+      Math.min(
+        estimateTxBytes(inputs, { P2PKH: 1 }),
+        estimateTxBytes(inputs, { P2SH: 1 }),
+        estimateTxBytes(inputs, { P2WPKH: 1 }),
+        estimateTxBytes(inputs, { P2WSH: 1 })
+      ) * this.minFeeRate
+    ).toString(); // watanabe
     this._chain = chain;
     this._coin = "Monacoin";
     this.digit = 100000000;
@@ -541,9 +552,14 @@ export default class Monacoin {
     };
   }
 
+  /**
+   * 手数料を計算する
+   * @param byteCounts バイト数 vsize
+   * @param feeRate 手数料率 watanabe / byte
+   */
   private _computeFees(byteCounts: number, feeRate: number): string {
-    const estimateFees = new BigNumber(byteCounts).times(feeRate).toString();
-    return estimateFees;
+    const fees = new BigNumber(byteCounts).times(feeRate).toString();
+    return fees;
   }
 
   /**
@@ -555,75 +571,30 @@ export default class Monacoin {
     feeRate: number;
     toAddress: string;
     amount: string;
+    algorithm: "Single Random Draw";
   }): {
     utxos: Utxo[];
-    estimateFees: string;
-    sumInput: string;
+    fees: string;
     hasChange: boolean;
   } {
-    const amount = new BigNumber(options.amount);
-    const utxos: Utxo[] = [];
-    let sumInput = new BigNumber(0);
-    let estimateFees = "0";
-    const inputs = { P2PKH: 0, P2WPKH: 0, "P2SH-P2WPKH": 0 };
-    const outputs = { P2SH: 0, P2PKH: 0, P2WPKH: 0, P2WSH: 0 };
-    const outputType = getOutputType(
-      options.toAddress,
-      this._network
-    ).toUpperCase();
-    outputs[outputType]++;
-    const changeType =
-      this.addressType.slice(0, 4) === "P2SH" ? "P2SH" : this.addressType;
-    let hasChange = true;
-    for (const utxo of options.utxos) {
-      utxos.push(utxo);
-      sumInput = sumInput.plus(utxo.amount);
-      inputs[this.addressType]++;
-      // おつりアドレスなしでfeeを計算
-      estimateFees = this._computeFees(
-        estimateTxBytes(inputs, outputs),
-        options.feeRate
-      );
-      if (sumInput.eq(amount.plus(estimateFees))) {
-        hasChange = false;
-        break;
-      }
-      // 十分なインプットがあるにも関わらず、おつりが作れない場合は、僅かな手数料を犠牲にしておつりをなくすことで送金可能にする。※インプットを追加すると余計に手数料がかかる
-      if (
-        sumInput.gt(amount.plus(estimateFees)) &&
-        sumInput.lt(amount.plus(estimateFees).plus(this.minOutValue))
-      ) {
-        estimateFees = new BigNumber(estimateFees)
-          .plus(sumInput.minus(amount.plus(estimateFees)))
-          .toString();
-        hasChange = false;
-        break;
-      }
-      // おつりアドレスを追加してfeeを再計算
-      outputs[changeType]++; // おつりアドレスを追加
-      estimateFees = this._computeFees(
-        estimateTxBytes(inputs, outputs),
-        options.feeRate
-      );
-      if (sumInput.gte(amount.plus(estimateFees).plus(this.minOutValue))) {
-        hasChange = true;
-        break;
-      }
-
-      outputs[changeType]--; // おつりアドレスを除外
+    if (options.algorithm === "Single Random Draw") {
+      const result = singleRandomDraw({
+        utxos: options.utxos,
+        feeRate: options.feeRate,
+        inputType: this.addressType,
+        outputType: getOutputType(
+          options.toAddress,
+          this._network
+        ).toUpperCase(),
+        amount: options.amount,
+        minOutValue: this.minOutValue
+      });
+      return {
+        utxos: result.selectedUtxos,
+        fees: result.fees,
+        hasChange: result.hasChange
+      };
     }
-    if (
-      hasChange &&
-      sumInput.lt(amount.plus(estimateFees).plus(this.minOutValue))
-    ) {
-      throw new Error("残高不足です");
-    }
-    return {
-      utxos,
-      estimateFees,
-      sumInput: sumInput.toString(),
-      hasChange
-    };
   }
 
   /**
@@ -652,12 +623,14 @@ export default class Monacoin {
     if (!this.addressInfos) await this.updateAddressInfos();
     if (!this.txInfos) await this.updateTxInfos();
     const allUtxos = this._getUtxos();
-    const { utxos, estimateFees, sumInput, hasChange } = this._selectUtxos({
+    const { utxos, fees, hasChange } = this._selectUtxos({
       utxos: allUtxos,
       feeRate: options.feeRate,
       toAddress: options.toAddress,
-      amount: options.amount
+      amount: options.amount,
+      algorithm: "Single Random Draw"
     });
+    const sumInput = getUtxosValue(utxos);
     const psbt = new bclib.Psbt({ network: this._network });
     psbt.setVersion(2);
     psbt.setLocktime(0);
@@ -677,7 +650,7 @@ export default class Monacoin {
     if (hasChange) {
       const changeAmount = new BigNumber(sumInput)
         .minus(new BigNumber(options.amount))
-        .minus(new BigNumber(estimateFees));
+        .minus(new BigNumber(fees));
       const outputData2 = this._getOutputData(
         this.changeAddress,
         changeAmount.toNumber()
@@ -689,7 +662,7 @@ export default class Monacoin {
       psbt,
       utxos,
       amount: options.amount,
-      fees: estimateFees,
+      fees: fees,
       feeRate: options.feeRate,
       sumInput,
       toAddress: options.toAddress

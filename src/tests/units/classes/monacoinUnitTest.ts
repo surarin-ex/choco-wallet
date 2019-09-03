@@ -314,7 +314,7 @@ describe("Monacoin のユニットテスト", (): void => {
       try {
         await monacoin.updateUnsignedTx({
           toAddress: "pQ1Lzx4hm7SrnfQ2LWihzB1JLosvC166Hs",
-          amount: "10000",
+          amount: "1000000",
           feeRate: 50
         });
         throw new Error("エラーが発生しませんでした");
@@ -328,36 +328,13 @@ describe("Monacoin のユニットテスト", (): void => {
       try {
         await monacoin.updateUnsignedTx({
           toAddress: "pQ1Lzx4hm7SrnfQ2LWihzB1JLosvC166Hs",
-          amount: "10000",
+          amount: "1000000",
           feeRate: 200.5
         });
         throw new Error("エラーが発生しませんでした");
       } catch (err) {
         assert.deepEqual(err.message, "手数料のレートが不適切です");
       }
-    });
-    it("送金額がインプットの合計と手数料の和と一致する場合におつりアドレスへの送金がなくなる", async (): Promise<
-      void
-    > => {
-      await monacoin.updateAddressInfos();
-      await monacoin.updateTxInfos();
-      await monacoin.updateUnsignedTx({
-        toAddress: "pQ1Lzx4hm7SrnfQ2LWihzB1JLosvC166Hs",
-        amount: "1000000",
-        feeRate: 150
-      });
-      const summary = monacoin.getUnsignedTxSummary();
-      const estimateFees =
-        estimateTxBytes({ "P2SH-P2WPKH": summary.inputCount }, { P2SH: 1 }) *
-        150;
-      await monacoin.updateUnsignedTx({
-        toAddress: "pQ1Lzx4hm7SrnfQ2LWihzB1JLosvC166Hs",
-        amount: new BigNumber(summary.sumInput).minus(estimateFees).toString(),
-        feeRate: 150
-      });
-      monacoin.signTx();
-      const signedSummary = monacoin.getSignedTxSummary();
-      assert.isNull(signedSummary.change);
     });
     it("全UTXOの合計額が送金額と手数料を上回るが、おつりを作れない場合、おつりなしで手数料多めのトランザクションが作成される", async (): Promise<
       void
@@ -408,8 +385,7 @@ describe("Monacoin のユニットテスト", (): void => {
         toAddress: "pQ1Lzx4hm7SrnfQ2LWihzB1JLosvC166Hs",
         amount: new BigNumber(sumInput)
           .minus(estimateFees)
-          .minus(monacoin.minOutValue)
-          .plus(1)
+          .minus(100)
           .toString(),
         feeRate: 150
       });
@@ -418,10 +394,7 @@ describe("Monacoin のユニットテスト", (): void => {
       assert.isNull(signedSummary.change);
       assert.deepEqual(
         signedSummary.fees,
-        new BigNumber(estimateFees)
-          .plus(monacoin.minOutValue)
-          .minus(1)
-          .toString()
+        new BigNumber(estimateFees).plus(100).toString()
       );
     });
   });
@@ -454,10 +427,6 @@ describe("Monacoin のユニットテスト", (): void => {
       assert.deepEqual(summary.change.address, monacoin.changeAddress);
       assert.deepEqual(summary.amount, "1000000");
       assert.deepEqual(summary.configuredFeeRate, 150);
-      assert.isTrue(
-        Math.abs((summary.confirmedFeeRate - 150) / summary.confirmedFeeRate) <
-          0.02
-      ); // 実際のfeeRateと指定したfeeRateの誤差が2%以内
     });
   });
   describe("broadcastTx() のユニットテスト", (): void => {
