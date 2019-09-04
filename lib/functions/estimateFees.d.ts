@@ -1,5 +1,11 @@
-import Utxo from "../interfaces/utxo";
-declare const estimateFees: (selectedUtxos: Utxo[], hasChange: boolean, options: {
+/**
+ * 手数料を推定する関数
+ * @param options 引数のオブジェクト
+ */
+declare const estimateFees: (options: {
+    inputLength: number;
+    outputLength: number;
+    hasChange: boolean;
     feeRate: number;
     inputType: string;
     outputType: string;

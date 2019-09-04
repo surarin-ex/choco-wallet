@@ -6,7 +6,7 @@ import estimateFees from "./estimateFees";
 
 /**
  * Single Random Draw アルゴリズムにより、UTXOを選択する。
- * 残高不足の場合はselectedUtxoに空の配列が返される。
+ * 残高不足の場合はエラーがthrowされる。
  * @param options 引数のオブジェクト
  */
 const singleRandomDraw = (options: {
@@ -21,22 +21,25 @@ const singleRandomDraw = (options: {
   const shuffledUtxos = shuffleArray(options.utxos);
 
   // UTXOの判定条件
-  const isInsufficientInputs = (
-    selectedUtxos: Utxo[],
-    options: {
-      feeRate: number;
-      inputType: string;
-      outputType: string;
-      amount: string;
-      minOutValue: string;
-    },
-    hasChange: boolean
-  ): boolean => {
+  const isInsufficientInputs = (options: {
+    selectedUtxos: Utxo[];
+    hasChange: boolean;
+    feeRate: number;
+    inputType: string;
+    outputType: string;
+    amount: string;
+    minOutValue: string;
+  }): boolean => {
     const sumInput = new BigNumber(getUtxosValue(selectedUtxos));
     let requirement = new BigNumber(options.amount).plus(
-      estimateFees(selectedUtxos, hasChange, options)
+      estimateFees({
+        inputLength: selectedUtxos.length,
+        outputLength: 1,
+        hasChange: options.hasChange,
+        ...options
+      })
     );
-    if (hasChange) {
+    if (options.hasChange) {
       requirement = requirement.plus(options.minOutValue);
     }
     return sumInput.lt(requirement);
@@ -45,7 +48,11 @@ const singleRandomDraw = (options: {
   let isInSufficient = false;
   let hasChange = true;
   while (
-    (isInSufficient = isInsufficientInputs(selectedUtxos, options, hasChange))
+    (isInSufficient = isInsufficientInputs({
+      selectedUtxos,
+      hasChange,
+      ...options
+    }))
   ) {
     if (shuffledUtxos[0]) {
       selectedUtxos.push(shuffledUtxos[0]);
@@ -56,11 +63,20 @@ const singleRandomDraw = (options: {
   }
 
   if (!isInSufficient) {
-    const fees = estimateFees(selectedUtxos, hasChange, options);
+    const fees = estimateFees({
+      inputLength: selectedUtxos.length,
+      outputLength: 1,
+      hasChange,
+      ...options
+    });
     return { selectedUtxos, hasChange, fees };
   } else {
     hasChange = false;
-    isInSufficient = isInsufficientInputs(selectedUtxos, options, hasChange);
+    isInSufficient = isInsufficientInputs({
+      selectedUtxos,
+      hasChange,
+      ...options
+    });
     if (!isInSufficient) {
       const fees = new BigNumber(getUtxosValue(selectedUtxos))
         .minus(options.amount)

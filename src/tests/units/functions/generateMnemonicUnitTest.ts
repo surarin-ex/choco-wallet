@@ -10,14 +10,12 @@ describe("generateMnemonic.tsのテスト", (): void => {
       const words = mnemonic.split(" ");
       const wordlist = bip39.wordlists["EN"];
       let result = true;
-      words.forEach(
-        (word): void => {
-          if (wordlist.indexOf(word) === -1) {
-            result = false;
-            return;
-          }
+      words.forEach((word): void => {
+        if (wordlist.indexOf(word) === -1) {
+          result = false;
+          return;
         }
-      );
+      });
       assert.isTrue(result);
     });
 
@@ -26,14 +24,12 @@ describe("generateMnemonic.tsのテスト", (): void => {
       const words = mnemonic.split("　");
       const wordlist = bip39.wordlists["JA"];
       let result = true;
-      words.forEach(
-        (word): void => {
-          if (wordlist.indexOf(word) === -1) {
-            result = false;
-            return;
-          }
+      words.forEach((word): void => {
+        if (wordlist.indexOf(word) === -1) {
+          result = false;
+          return;
         }
-      );
+      });
       assert.isTrue(result);
     });
   });

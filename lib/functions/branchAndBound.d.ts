@@ -1,10 +1,10 @@
 import Utxo from "../interfaces/utxo";
 /**
- * Single Random Draw アルゴリズムにより、UTXOを選択する。
+ * Branch and Bound アルゴリズムにより、UTXOを選択する。
  * 残高不足の場合はエラーがthrowされる。
  * @param options 引数のオブジェクト
  */
-declare const singleRandomDraw: (options: {
+declare const branchAndBound: (options: {
     utxos: Utxo[];
     feeRate: number;
     inputType: string;
@@ -16,4 +16,4 @@ declare const singleRandomDraw: (options: {
     hasChange: boolean;
     fees: string;
 };
-export default singleRandomDraw;
+export default branchAndBound;

@@ -22,6 +22,7 @@ import TxInfo from "../interfaces/txInfo";
 import Utxo from "../interfaces/utxo";
 import singleRandomDraw from "../functions/singleRandomDraw";
 import getUtxosValue from "../functions/getUtxosValue";
+import branchAndBound from "../functions/branchAndBound";
 
 /**
  * Monacoinのクラス
@@ -571,7 +572,7 @@ export default class Monacoin {
     feeRate: number;
     toAddress: string;
     amount: string;
-    algorithm: "Single Random Draw";
+    algorithm: "Single Random Draw" | "Branch and Bound";
   }): {
     utxos: Utxo[];
     fees: string;
@@ -579,6 +580,23 @@ export default class Monacoin {
   } {
     if (options.algorithm === "Single Random Draw") {
       const result = singleRandomDraw({
+        utxos: options.utxos,
+        feeRate: options.feeRate,
+        inputType: this.addressType,
+        outputType: getOutputType(
+          options.toAddress,
+          this._network
+        ).toUpperCase(),
+        amount: options.amount,
+        minOutValue: this.minOutValue
+      });
+      return {
+        utxos: result.selectedUtxos,
+        fees: result.fees,
+        hasChange: result.hasChange
+      };
+    } else if (options.algorithm === "Branch and Bound") {
+      const result = branchAndBound({
         utxos: options.utxos,
         feeRate: options.feeRate,
         inputType: this.addressType,
@@ -628,7 +646,7 @@ export default class Monacoin {
       feeRate: options.feeRate,
       toAddress: options.toAddress,
       amount: options.amount,
-      algorithm: "Single Random Draw"
+      algorithm: "Branch and Bound"
     });
     const sumInput = getUtxosValue(utxos);
     const psbt = new bclib.Psbt({ network: this._network });
