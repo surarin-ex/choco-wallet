@@ -4,11 +4,11 @@ const endpointList = [
     chain: "main",
     coin: "Monacoin"
   },
-  {
-    uri: "http://blockbook.monacoin.cloud/api/",
-    chain: "main",
-    coin: "Monacoin"
-  },
+  // {
+  //   uri: "https://blockbook.monacoin.cloud/api/",
+  //   chain: "main",
+  //   coin: "Monacoin"
+  // },
   {
     uri: "https://testnet-blockbook.electrum-mona.org/api/",
     chain: "test",
