@@ -909,7 +909,20 @@ export default class Monacoin {
       // 出金の場合
       else if (hasMyInput && !isMyOutput) {
         const value =
-          "-" + new BigNumber(info.value).dividedBy(this.digit).toString();
+          "-" +
+          new BigNumber(info.value).dividedBy(this.digit).minus(
+            info.vout.reduce((acc, output): BigNumber => {
+              if (
+                output.addresses.every((address): boolean => {
+                  return allAddresses.includes(address);
+                })
+              ) {
+                return acc.plus(output.value);
+              } else {
+                return acc;
+              }
+            }, new BigNumber(0))
+          );
         const fees =
           "-" + new BigNumber(info.fees).dividedBy(this.digit).toString();
         txHistories.push({
