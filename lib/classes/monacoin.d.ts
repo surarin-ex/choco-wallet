@@ -1,6 +1,7 @@
 import { Blockbook } from "../../src/classes/blockbook";
 import AddressInfo from "../interfaces/addressInfo";
 import TxInfo from "../interfaces/txInfo";
+import TxHistory from "../interfaces/txHistory";
 /**
  * Monacoinのクラス
  */
@@ -12,6 +13,7 @@ export default class Monacoin {
     balanceReadable: string;
     receiveAddress: string;
     changeAddress: string;
+    txHistories: TxHistory[];
     readonly displayUnit: string;
     readonly balanceUnit: string;
     readonly addressType: string;
@@ -216,4 +218,8 @@ export default class Monacoin {
      * ブロードキャストに成功した場合txidを返し、署名済みトランザクションを破棄する
      */
     broadcastTx(): Promise<string>;
+    /**
+     * トランザクション履歴を更新するメソッド
+     */
+    updateHistory(): void;
 }

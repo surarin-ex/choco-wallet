@@ -5,6 +5,14 @@ import estimateTxBytes from "../../../functions/estimateTxBytes";
 import Utxo from "../../../interfaces/utxo";
 import * as bclib from "bitcoinjs-lib";
 
+const sleep = (miliSec): Promise<any> => {
+  return new Promise((resolve): void => {
+    setTimeout((): void => {
+      resolve();
+    }, miliSec);
+  });
+};
+
 describe("Monacoin のユニットテスト", (): void => {
   describe("getPath() のユニットテスト", (): void => {
     let monacoin: Monacoin;
@@ -472,6 +480,32 @@ describe("Monacoin のユニットテスト", (): void => {
       const summary = monacoin.getSignedTxSummary();
       const txid = await monacoin.broadcastTx();
       assert.deepEqual(txid, summary.txid);
+    });
+  });
+  describe("updateHistory() のユニットテスト", (): void => {
+    let monacoin: Monacoin;
+    beforeEach(
+      "インスタンス作成",
+      async (): Promise<void> => {
+        monacoin = new Monacoin(
+          "なめらか　からい　ひやけ　げきか　なにごと　かわら　こもち　おおや　おもう　こうかん　れいぎ　とそう",
+          "test"
+        );
+      }
+    );
+    it("txInfoがない状態で実行してもtxHistoriesは[]となっている", (): void => {
+      monacoin.updateHistory();
+      assert.isEmpty(monacoin.txHistories);
+    });
+    it("正しいbalanceが計算できている", async (): Promise<void> => {
+      await sleep(1000);
+      await monacoin.updateAddressInfos();
+      await monacoin.updateTxInfos();
+      monacoin.updateHistory();
+      assert.deepEqual(
+        monacoin.txHistories[0].balance,
+        monacoin.balanceReadable
+      );
     });
   });
 });

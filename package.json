@@ -1,6 +1,6 @@
 {
   "name": "choco-wallet",
-  "version": "0.0.6",
+  "version": "0.0.7",
   "description": "",
   "main": "./lib/index.js",
   "private": true,
@@ -10,7 +10,7 @@
   "scripts": {
     "build": "yarn run clean && tsc --declaration",
     "watch": "yarn run clean && tsc --watch --declaration",
-    "test": "mocha  --timeout 20000 './lib/tests/**/*.js'",
+    "test": "mocha  --timeout 30000 './lib/tests/**/*.js'",
     "clean": "rm -rf ./lib",
     "lint": "yarn eslint src/**/*.ts --fix"
   },
@@ -22,6 +22,7 @@
     "bip32": "2.0.3",
     "bip39": "2.6.0",
     "bitcoinjs-lib": "^5.0.1",
+    "moment": "^2.24.0",
     "regtest-client": "^0.2.0",
     "store": "^2.0.12"
   },
@@ -31,8 +32,8 @@
     "@types/mocha": "^5.2.6",
     "@types/node": "^10.14",
     "@types/store": "^2.0.1",
-    "@typescript-eslint/eslint-plugin": "^1.7.0",
-    "@typescript-eslint/parser": "^2.0.0",
+    "@typescript-eslint/eslint-plugin": "^2.2.0",
+    "@typescript-eslint/parser": "^2.2.0",
     "chai": "^4.1.2",
     "eslint": "^5.16.0",
     "eslint-config-prettier": "^4.2.0",

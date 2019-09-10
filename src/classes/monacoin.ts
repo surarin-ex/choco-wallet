@@ -23,6 +23,8 @@ import Utxo from "../interfaces/utxo";
 import singleRandomDraw from "../functions/singleRandomDraw";
 import getUtxosValue from "../functions/getUtxosValue";
 import branchAndBound from "../functions/branchAndBound";
+import TxHistory from "../interfaces/txHistory";
+import * as Moment from "moment";
 
 /**
  * Monacoinのクラス
@@ -35,6 +37,7 @@ export default class Monacoin {
   public balanceReadable: string;
   public receiveAddress: string;
   public changeAddress: string;
+  public txHistories: TxHistory[];
   public readonly displayUnit: string;
   public readonly balanceUnit: string;
   public readonly addressType: string;
@@ -81,6 +84,7 @@ export default class Monacoin {
   public constructor(mnemonic: string, chain: "main" | "test" = "main") {
     this.blockbook = null;
     this.addressInfos = [];
+    this.txHistories = [];
     this.balance = "0";
     this.displayUnit = "MONA";
     this.balanceUnit = "WATANABE";
@@ -833,5 +837,131 @@ export default class Monacoin {
     );
     this.deleteSignedTx();
     return result;
+  }
+
+  /**
+   * トランザクション履歴を更新するメソッド
+   */
+  public updateHistory(): void {
+    if (!this.txInfos || !this.addressInfos) return;
+    const allAddresses = this.addressInfos.map((info): string => {
+      return info.address;
+    });
+    const flatten = (arr): any[] => {
+      return arr.reduce((p, c): any[] => {
+        return Array.isArray(c) ? p.concat(flatten(c)) : p.concat(c);
+      }, []);
+    };
+    const txHistories: TxHistory[] = [];
+    this.txInfos.forEach((info): void => {
+      const fromAddresses = flatten(
+        info.vin.map((input): string[] => {
+          return input.addresses;
+        })
+      );
+      const toAddresses = flatten(
+        info.vout.map((output): string[] => {
+          return output.addresses;
+        })
+      );
+      const hasMyInput = fromAddresses.some((address): boolean => {
+        return allAddresses.includes(address);
+      });
+      const isMyInput = fromAddresses.every((address): boolean => {
+        return allAddresses.includes(address);
+      });
+      const hasMyOutput = toAddresses.some((address): boolean => {
+        return allAddresses.includes(address);
+      });
+      const isMyOutput = toAddresses.every((address): boolean => {
+        return allAddresses.includes(address);
+      });
+      // 入金の場合
+      if (!hasMyInput && hasMyOutput) {
+        const value =
+          "+" +
+          info.vout
+            .filter((output): boolean => {
+              return output.addresses.every((address): boolean => {
+                return allAddresses.includes(address);
+              });
+            })
+            .reduce((acc, output): BigNumber => {
+              return acc.plus(output.value);
+            }, new BigNumber("0"))
+            .dividedBy(this.digit)
+            .toString();
+        txHistories.push({
+          txid: info.txid,
+          blockTime: info.blockTime,
+          time: info.blockTime
+            ? Moment(new Date(info.blockTime * 1000)).format("YYYY/MM/DD HH:mm")
+            : "未承認",
+          type: "入金",
+          detailUri: `${this.blockbook.explorer}${info.txid}`,
+          value,
+          fees: "0",
+          partner: "不明",
+          balance: "0",
+          confirmations: info.confirmations
+        });
+      }
+      // 出金の場合
+      else if (hasMyInput && !isMyOutput) {
+        const value =
+          "-" + new BigNumber(info.value).dividedBy(this.digit).toString();
+        const fees =
+          "-" + new BigNumber(info.fees).dividedBy(this.digit).toString();
+        txHistories.push({
+          txid: info.txid,
+          blockTime: info.blockTime,
+          time: info.blockTime
+            ? Moment(new Date(info.blockTime * 1000)).format("YYYY/MM/DD HH:mm")
+            : "未承認",
+          type: "出金",
+          detailUri: `${this.blockbook.explorer}${info.txid}`,
+          value,
+          fees,
+          partner: "不明",
+          balance: "0",
+          confirmations: info.confirmations
+        });
+      }
+      // 自分への送金の場合
+      else if (isMyInput && isMyOutput) {
+        const fees =
+          "-" + new BigNumber(info.fees).dividedBy(this.digit).toString();
+        txHistories.push({
+          txid: info.txid,
+          blockTime: info.blockTime,
+          time: info.blockTime
+            ? Moment(new Date(info.blockTime * 1000)).format("YYYY/MM/DD HH:mm")
+            : "未承認",
+          type: "振替",
+          detailUri: `${this.blockbook.explorer}${info.txid}`,
+          value: "0",
+          fees,
+          partner: "自分",
+          balance: "0",
+          confirmations: info.confirmations
+        });
+      }
+      // その他の場合
+      else {
+        throw new Error("トランザクションの種類の判定に失敗しました");
+      }
+    });
+    // トランザクション履歴のソート(新しい順)
+    txHistories.sort((a, b): number => {
+      return b.blockTime - a.blockTime;
+    });
+
+    // balance計算
+    let balance = new BigNumber(0);
+    for (let i = txHistories.length - 1; i >= 0; i--) {
+      balance = balance.plus(txHistories[i].value).plus(txHistories[i].fees);
+      txHistories[i].balance = balance.toString();
+    }
+    this.txHistories = txHistories;
   }
 }

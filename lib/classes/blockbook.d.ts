@@ -46,6 +46,7 @@ export interface BlockbookTx {
  */
 export declare class Blockbook {
     endpoint: string;
+    explorer: string;
     coin: "Monacoin" | "Monacoin Testnet";
     chain: "main" | "test";
     init(chain?: string, coin?: string): Promise<void>;

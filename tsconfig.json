@@ -5,11 +5,7 @@
     "rootDir": "./src",
     "outDir": "./lib",
     "moduleResolution": "node",
-    "lib": ["dom", "es2015"],
-    "types": [
-      "node",
-      "mocha"
-    ]
+    "lib": ["dom", "es2015"]
   },
   "exclude": ["node_modules"]
 }

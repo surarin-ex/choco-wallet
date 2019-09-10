@@ -51,6 +51,7 @@ export interface BlockbookTx {
  */
 export class Blockbook {
   public endpoint: string;
+  public explorer: string;
   public coin: "Monacoin" | "Monacoin Testnet";
   public chain: "main" | "test";
 
@@ -75,6 +76,7 @@ export class Blockbook {
         if (res.data.blockbook.inSyncMempool === false)
           throw new Error("Not syncing mempool");
         this.endpoint = endpoint;
+        this.explorer = list[i % list.length].explorer;
         this.coin = res.data.blockbook.coin;
         this.chain = res.data.backend.chain;
         break;
