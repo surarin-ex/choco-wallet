@@ -901,7 +901,7 @@ export default class Monacoin {
           detailUri: `${this.blockbook.explorer}${info.txid}`,
           value,
           fees: "0",
-          partner: "",
+          partner: "不明",
           balance: "0",
           confirmations: info.confirmations
         });
@@ -937,7 +937,7 @@ export default class Monacoin {
           detailUri: `${this.blockbook.explorer}${info.txid}`,
           value,
           fees,
-          partner: "",
+          partner: "不明",
           balance: "0",
           confirmations: info.confirmations
         });
