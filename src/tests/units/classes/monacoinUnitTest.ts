@@ -508,4 +508,22 @@ describe("Monacoin のユニットテスト", (): void => {
       );
     });
   });
+  describe("getMnemonic() のユニットテスト", (): void => {
+    let monacoin: Monacoin;
+    beforeEach(
+      "インスタンス作成",
+      async (): Promise<void> => {
+        monacoin = new Monacoin(
+          "なめらか　からい　ひやけ　げきか　なにごと　かわら　こもち　おおや　おもう　こうかん　れいぎ　とそう",
+          "test"
+        );
+      }
+    );
+    it("Mnemonicを正しく取得できる", () => {
+      assert.deepEqual(
+        monacoin.getMnemonic(),
+        "なめらか　からい　ひやけ　げきか　なにごと　かわら　こもち　おおや　おもう　こうかん　れいぎ　とそう"
+      );
+    });
+  });
 });

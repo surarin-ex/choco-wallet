@@ -22,6 +22,7 @@ export default class Monacoin {
     readonly digit: number;
     readonly gapLimitReceiving: number;
     readonly gapLimitChange: number;
+    private _mnemonic;
     private _seed;
     private _node;
     private _chain;
@@ -31,6 +32,10 @@ export default class Monacoin {
     private unsignedTx;
     private signedTx;
     constructor(mnemonic: string, chain?: "main" | "test");
+    /**
+     * Mnemonicを取得する
+     */
+    getMnemonic(): string;
     /**
      * おつりフラグとアドレスインデックスを指定してbip32のpathを取得する
      * @param changeFlag おつりフラグ "1"の場合はおつりを表し、"0"の場合は受取アドレスを表す

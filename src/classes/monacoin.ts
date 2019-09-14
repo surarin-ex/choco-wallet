@@ -46,6 +46,7 @@ export default class Monacoin {
   public readonly digit: number;
   public readonly gapLimitReceiving: number;
   public readonly gapLimitChange: number;
+  private _mnemonic: string;
   private _seed: Buffer;
   private _node: BIP32Interface;
   private _chain: "main" | "test";
@@ -107,9 +108,17 @@ export default class Monacoin {
     this.gapLimitChange = 3; // 未使用おつりアドレスの余裕数
     this._network = getNetwork(this._coin, this._chain);
     this._pathBase = getPathBase(this._coin, this._chain);
+    this._mnemonic = mnemonic;
     this._seed = bip39.mnemonicToSeed(mnemonic);
     this._node = bip32.fromSeed(this._seed, this._network); // Monacoinのパラメータを指定
     this.unsignedTx = null;
+  }
+
+  /**
+   * Mnemonicを取得する
+   */
+  public getMnemonic(): string {
+    return this._mnemonic;
   }
 
   /**
