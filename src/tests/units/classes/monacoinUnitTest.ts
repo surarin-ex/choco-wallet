@@ -183,16 +183,20 @@ describe("Monacoin のユニットテスト", (): void => {
       const feeRate_slow = await monacoin.estimateFeeRate("slow");
       const feeRate_min = await monacoin.estimateFeeRate("min");
       assert.isTrue(
-        new BigNumber(feeRate_fast).gte(new BigNumber(feeRate_normal))
+        new BigNumber(feeRate_fast).gte(new BigNumber(feeRate_normal)),
+        "feeRate_fast >= feeRate_normal"
       );
       assert.isTrue(
-        new BigNumber(feeRate_normal).gte(new BigNumber(feeRate_slow))
+        new BigNumber(feeRate_normal).gte(new BigNumber(feeRate_slow)),
+        "feeRate_normal >= feeRate_slow"
       );
       assert.isTrue(
-        new BigNumber(feeRate_slow).gte(new BigNumber(feeRate_min))
+        new BigNumber(feeRate_slow).gte(new BigNumber(feeRate_min)),
+        "feeRate_slow >= feeRate_min"
       );
       assert.isTrue(
-        new BigNumber(feeRate_min).gte(new BigNumber(monacoin.minFeeRate))
+        new BigNumber(feeRate_min).eq(new BigNumber(monacoin.minFeeRate)),
+        "feeRate_min >= monacoin.minFeeRate"
       );
     });
   });

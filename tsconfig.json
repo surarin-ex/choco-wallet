@@ -5,7 +5,10 @@
     "rootDir": "./src",
     "outDir": "./lib",
     "moduleResolution": "node",
-    "lib": ["dom", "es2015"]
+    "lib": ["dom", "es2018"]
   },
-  "exclude": ["node_modules"]
+  "exclude": ["node_modules"],
+  "include": [
+    "src/**/*"
+  ]
 }

@@ -11,13 +11,15 @@
   "parser": "@typescript-eslint/parser",
   "parserOptions": {
     "sourceType": "module",
-    "project": "./tsconfig.json"
+    "project": ["./tsconfig.json", "./**/tsconfig.json"],
+    "createDefaultProgram": true // eslint-typescriptがバージョンアップして新規ファイルのパースが正しく行えるようになるまでの一時的な処理
   },
-  "env": { "browser": true, "node": true, "es6": true },
+  "env": { "browser": false, "node": true, "es6": true },
   "rules": {
     "@typescript-eslint/interface-name-prefix": "off",
     "@typescript-eslint/camelcase": "off",
     "@typescript-eslint/no-explicit-any": "off",
+    "@typescript-eslint/no-empty-interface": "off",
     "no-console": "off",
     "no-control-regex": "off"
   }

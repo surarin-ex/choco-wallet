@@ -1,4 +1,6 @@
 import generateMnemonic from "./functions/generateMnemonic";
+import getMnemonicFromWordList from "./functions/getMnemonicFromWordList";
+import validateBip39Word from "./functions/validateBip39Word";
 import estimateTxBytes from "./functions/estimateTxBytes";
 import getOutputType from "./functions/getOutputType";
 import getPathBase from "./functions/getPathBase";
@@ -10,6 +12,8 @@ import Utxo from "./interfaces/utxo";
 
 export {
   generateMnemonic,
+  getMnemonicFromWordList,
+  validateBip39Word,
   estimateTxBytes,
   getOutputType,
   getPathBase,

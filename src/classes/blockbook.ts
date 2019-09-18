@@ -56,7 +56,7 @@ export class Blockbook {
   public chain: "main" | "test";
 
   public async init(chain = "main", coin = "Monacoin"): Promise<void> {
-    let initialIndex = Math.floor(Math.random() * endpointList.length);
+    const initialIndex = Math.floor(Math.random() * endpointList.length);
     let endpoint: string;
     const list = endpointList.filter(
       (blockbook: { uri: string; chain: string; coin: string }): boolean => {
@@ -112,7 +112,7 @@ export class Blockbook {
   ): Promise<BlockbookAddress[]> {
     try {
       const promises: Promise<BlockbookAddress>[] = [];
-      for (let address of addresses) {
+      for (const address of addresses) {
         promises.push(this.getBlockbookAddress(address));
       }
       const addressInfos = await Promise.all(promises);
@@ -143,7 +143,7 @@ export class Blockbook {
   public async getBlockbookTxs(txids: string[]): Promise<BlockbookTx[]> {
     try {
       const promises: Promise<BlockbookTx>[] = [];
-      for (let txid of txids) {
+      for (const txid of txids) {
         promises.push(this.getBlockbookTx(txid));
       }
       const txInfos = await Promise.all(promises);
