@@ -107,10 +107,7 @@ export declare class Blockbook {
      * subscribeAddressTxid時のリスナーを定義する
      * @param callback コールバック関数
      */
-    addSubscribeAddressTxidListener(callback: (options: {
-        address: string;
-        txid: string;
-    }) => void): void;
+    addSubscribeAddressTxidListener(callback: (address: string, tx: BlockbookTx) => void): void;
 }
 /**
  * Blockbookのクラスをインスタンス化する関数

@@ -293,13 +293,14 @@ export class Blockbook {
    * @param callback コールバック関数
    */
   public addSubscribeAddressTxidListener(
-    callback: (options: { address: string; txid: string }) => void
+    callback: (address: string, tx: BlockbookTx) => void
   ): void {
     if (!this._socket.hasListeners("bitcoind/addresstxid")) {
       this._socket.on(
         "bitcoind/addresstxid",
-        (result: { address: string; txid: string }) => {
-          callback(result);
+        async (result: { address: string; txid: string }) => {
+          const tx = await this.getBlockbookTx(result.txid);
+          callback(result.address, tx);
         }
       );
     }

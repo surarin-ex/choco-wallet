@@ -1,3 +1,4 @@
+import { TxInfo } from "..";
 /**
  * 指定したアドレスを監視するクラス
  */
@@ -40,10 +41,7 @@ export default class Monitor {
      * 監視中のアドレスに紐づくTXIDを受信したときの処理をセットするメソッド
      * @param callback コールバック関数
      */
-    setListener(callback: (options: {
-        address: string;
-        txid: string;
-    }) => void): void;
+    setListener(callback: (address: string, tx: TxInfo) => void): void;
     /**
      * アドレスリストを取得する
      * 値渡しなので取得した内容を更新しても何も変化はない

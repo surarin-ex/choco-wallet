@@ -1,4 +1,5 @@
 import createBlockbook, { Blockbook } from "./blockbook";
+import { TxInfo } from "..";
 
 /**
  * 指定したアドレスを監視するクラス
@@ -8,7 +9,7 @@ export default class Monitor {
   public readonly chain: "main" | "test";
   private _blockbook: Blockbook;
   private _addresses: string[];
-  private _callback: (options: { address: string; txid: string }) => void;
+  private _callback: (address: string, tx: TxInfo) => void;
 
   /**
    * 初期化
@@ -86,9 +87,7 @@ export default class Monitor {
    * 監視中のアドレスに紐づくTXIDを受信したときの処理をセットするメソッド
    * @param callback コールバック関数
    */
-  public setListener(
-    callback: (options: { address: string; txid: string }) => void
-  ): void {
+  public setListener(callback: (address: string, tx: TxInfo) => void): void {
     this._callback = callback;
     this._blockbook.addSubscribeAddressTxidListener(callback);
   }
