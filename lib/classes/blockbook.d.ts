@@ -49,7 +49,9 @@ export declare class Blockbook {
     explorer: string;
     coin: "Monacoin" | "Monacoin Testnet";
     chain: "main" | "test";
-    init(chain?: string, coin?: string): Promise<void>;
+    private _socket;
+    private socketUrl;
+    init(chain?: string, coin?: string): Promise<boolean>;
     /**
      * アドレス情報を取得するメソッド
      * @param address アドレス
@@ -81,6 +83,34 @@ export declare class Blockbook {
      * @param txHex ブロードキャストするtxの16進数データ
      */
     broadcastTx(txHex: string): Promise<string>;
+    /**
+     * BlockbookサーバーへSocket接続する
+     * @param callback: コールバック関数
+     */
+    connect(callback?: Function): Promise<void>;
+    /**
+     * Socketを切断する
+     */
+    disconnect(): void;
+    /**
+     * Socket接続が切断された場合のフォールバック処理を登録する
+     * @param callback コールバック関数
+     */
+    registerFallback(callback: Function): void;
+    /**
+     * 指定したアドレスに関連するTXIDを購読する
+     * @param addresses アドレスリスト
+     * @param callback コールバック関数
+     */
+    subscribeAddressTxid(addresses: string[], callback?: Function): Promise<void>;
+    /**
+     * subscribeAddressTxid時のリスナーを定義する
+     * @param callback コールバック関数
+     */
+    addSubscribeAddressTxidListener(callback: (options: {
+        address: string;
+        txid: string;
+    }) => void): void;
 }
 /**
  * Blockbookのクラスをインスタンス化する関数

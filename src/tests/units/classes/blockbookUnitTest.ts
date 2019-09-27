@@ -6,11 +6,9 @@ describe("Blockbook のユニットテスト", (): void => {
   describe("createBlockbook() のユニットテスト", async (): Promise<void> => {
     it("初期化できる", async (): Promise<void> => {
       const blockbook = await createBlockbook();
-      const uris = endpointList.map(
-        (endpoint: any): string => {
-          return endpoint.uri;
-        }
-      );
+      const uris = endpointList.map((endpoint: any): string => {
+        return endpoint.uri;
+      });
       assert.deepInclude(uris, blockbook.endpoint);
       assert.deepEqual(blockbook.coin, "Monacoin");
       assert.deepEqual(blockbook.chain, "main");
@@ -18,11 +16,9 @@ describe("Blockbook のユニットテスト", (): void => {
 
     it("テストネットで初期化できる", async (): Promise<void> => {
       const blockbook = await createBlockbook("test", "Monacoin");
-      const uris = endpointList.map(
-        (endpoint: any): string => {
-          return endpoint.uri;
-        }
-      );
+      const uris = endpointList.map((endpoint: any): string => {
+        return endpoint.uri;
+      });
       assert.deepInclude(uris, blockbook.endpoint);
       assert.deepEqual(blockbook.coin, "Monacoin Testnet");
       assert.deepEqual(blockbook.chain, "test");
@@ -130,7 +126,7 @@ describe("Blockbook のユニットテスト", (): void => {
     );
     it("複数のアドレス情報を取得できる", async (): Promise<void> => {
       const addressInfos = await blockbook.getBlockbookAddresses(addresses);
-      for (let addressInfo of addressInfos) {
+      for (const addressInfo of addressInfos) {
         assert.deepInclude(addresses, addressInfo.address);
       }
     });
@@ -216,6 +212,49 @@ describe("Blockbook のユニットテスト", (): void => {
       } catch (err) {
         assert.notDeepEqual(err.message, "エラーが返されませんでした");
       }
+    });
+  });
+
+  describe("connect() のユニットテスト", () => {
+    let blockbook: Blockbook;
+    before(
+      async (): Promise<void> => {
+        blockbook = await createBlockbook("test", "Monacoin");
+      }
+    );
+    afterEach(() => {
+      blockbook.disconnect();
+    });
+    it("Callback関数形式の使用方法で接続できる", done => {
+      blockbook.connect(done);
+    });
+    it("Promise形式の使用方法で接続できる", async () => {
+      await blockbook.connect();
+    });
+  });
+  describe("subscribeAddressTxid() のユニットテスト", () => {
+    let blockbook: Blockbook;
+    before(
+      async (): Promise<void> => {
+        blockbook = await createBlockbook("test", "Monacoin");
+      }
+    );
+    beforeEach(async () => {
+      await blockbook.connect();
+    });
+    afterEach(() => {
+      blockbook.disconnect();
+    });
+    it("Callback関数形式の使用方法で購読できる", done => {
+      blockbook.subscribeAddressTxid(
+        ["pTUe8n9ZGgXybNc9z4Xi1BcPAWeUpnqd4n"],
+        done
+      );
+    });
+    it("Promise形式の使用方法で接続できる", async () => {
+      await blockbook.subscribeAddressTxid([
+        "pTUe8n9ZGgXybNc9z4Xi1BcPAWeUpnqd4n"
+      ]);
     });
   });
 });

@@ -1,5 +1,14 @@
 import endpointList from "../conf/blockbookList";
 import axios from "axios";
+import * as io from "socket.io-client";
+
+const sleep = (ms: number): Promise<void> => {
+  return new Promise((resolve): void => {
+    setTimeout(() => {
+      resolve();
+    }, ms);
+  });
+};
 
 export interface BlockbookAddress {
   page: number;
@@ -54,8 +63,10 @@ export class Blockbook {
   public explorer: string;
   public coin: "Monacoin" | "Monacoin Testnet";
   public chain: "main" | "test";
+  private _socket: SocketIOClient.Socket;
+  private socketUrl: string;
 
-  public async init(chain = "main", coin = "Monacoin"): Promise<void> {
+  public async init(chain = "main", coin = "Monacoin"): Promise<boolean> {
     const initialIndex = Math.floor(Math.random() * endpointList.length);
     let endpoint: string;
     const list = endpointList.filter(
@@ -77,9 +88,10 @@ export class Blockbook {
           throw new Error("Not syncing mempool");
         this.endpoint = endpoint;
         this.explorer = list[i % list.length].explorer;
+        this.socketUrl = list[i % list.length].socket;
         this.coin = res.data.blockbook.coin;
         this.chain = res.data.backend.chain;
-        break;
+        return true;
       } catch (err) {
         if (i === initialIndex + endpointList.length - 1) {
           throw err;
@@ -87,6 +99,7 @@ export class Blockbook {
         continue;
       }
     }
+    return false;
   }
 
   /**
@@ -183,6 +196,114 @@ export class Blockbook {
       throw err;
     }
   }
+
+  /**
+   * BlockbookサーバーへSocket接続する
+   * @param callback: コールバック関数
+   */
+  public connect(callback?: Function): Promise<void> {
+    return new Promise((resolve, reject): void => {
+      try {
+        if (this._socket && this._socket.connected) {
+          resolve();
+        }
+        this._socket = io(this.socketUrl, {
+          reconnection: true,
+          reconnectionAttempts: 1, // 最大6回の再接続
+          reconnectionDelay: 1000, // 1秒間隔で再接続,
+          reconnectionDelayMax: 5000, // 再接続の最大間隔
+          timeout: 10000, // 10秒でタイムアウト
+          transports: ["websocket"] // websocket接続
+        });
+        this._socket.on("connect", () => {
+          if (callback) {
+            callback();
+          }
+          resolve();
+        });
+      } catch (err) {
+        if (callback) {
+          callback(err);
+        }
+        reject(err);
+      }
+    });
+  }
+
+  /**
+   * Socketを切断する
+   */
+  public disconnect(): void {
+    if (this._socket && this._socket.connected) {
+      this._socket.removeAllListeners();
+      this._socket.disconnect();
+    }
+  }
+
+  /**
+   * Socket接続が切断された場合のフォールバック処理を登録する
+   * @param callback コールバック関数
+   */
+  public registerFallback(callback: Function): void {
+    if (this._socket) {
+      this._socket.on("reconnect_failed", () => {
+        console.log("reconnect failed");
+        callback();
+      });
+      // this._socket.on("disconnect", () => {
+      //   console.log("socket disconnected");
+      //   callback();
+      // });
+    }
+  }
+
+  /**
+   * 指定したアドレスに関連するTXIDを購読する
+   * @param addresses アドレスリスト
+   * @param callback コールバック関数
+   */
+  public subscribeAddressTxid(
+    addresses: string[],
+    callback?: Function
+  ): Promise<void> {
+    return new Promise((resolve, reject): void => {
+      try {
+        this._socket.emit(
+          "subscribe",
+          "bitcoind/addresstxid",
+          addresses,
+          () => {
+            if (callback) {
+              callback();
+            }
+            resolve();
+          }
+        );
+      } catch (err) {
+        if (callback) {
+          callback(err);
+        }
+        reject(err);
+      }
+    });
+  }
+
+  /**
+   * subscribeAddressTxid時のリスナーを定義する
+   * @param callback コールバック関数
+   */
+  public addSubscribeAddressTxidListener(
+    callback: (options: { address: string; txid: string }) => void
+  ): void {
+    if (!this._socket.hasListeners("bitcoind/addresstxid")) {
+      this._socket.on(
+        "bitcoind/addresstxid",
+        (result: { address: string; txid: string }) => {
+          callback(result);
+        }
+      );
+    }
+  }
 }
 
 /**
@@ -202,7 +323,9 @@ const createBlockbook = async (
     coinName = `${coin} Testnet`;
   }
 
-  await obj.init(chain, coinName);
+  while (!(await obj.init(chain, coinName))) {
+    await sleep(1000);
+  }
   return obj;
 };
 
