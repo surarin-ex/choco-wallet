@@ -219,6 +219,7 @@ export class Blockbook {
           if (callback) {
             callback();
           }
+          console.log(`socket connected to ${this.socketUrl}`);
           resolve();
         });
       } catch (err) {
@@ -237,6 +238,7 @@ export class Blockbook {
     if (this._socket && this._socket.connected) {
       this._socket.removeAllListeners();
       this._socket.disconnect();
+      console.log(`socket disconnected to ${this.socketUrl}`);
     }
   }
 
@@ -250,10 +252,6 @@ export class Blockbook {
         console.log("reconnect failed");
         callback();
       });
-      // this._socket.on("disconnect", () => {
-      //   console.log("socket disconnected");
-      //   callback();
-      // });
     }
   }
 
