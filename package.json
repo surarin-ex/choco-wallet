@@ -1,6 +1,6 @@
 {
   "name": "choco-wallet",
-  "version": "0.0.16",
+  "version": "0.0.17",
   "description": "",
   "main": "./lib/index.js",
   "private": true,
@@ -25,7 +25,6 @@
     "bip39": "2.6.0",
     "bitcoinjs-lib": "^5.0.1",
     "moment": "^2.24.0",
-    "regtest-client": "^0.2.0",
     "socket.io-client": "^2.3.0",
     "store": "^2.0.12",
     "unorm": "^1.6.0"
